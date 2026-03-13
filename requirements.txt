@@ -1,0 +1,61 @@
+# Frontend Dependencies (Next.js/Node.js project)
+# Run: npm install
+# From package.json
+
+# Shadcn/UI Setup (already configured via components.json)
+# npx shadcn@latest init  # (Done: tailwind.config.ts, globals.css)
+# Installed components:
+# npx shadcn@latest add button input progress
+# Dependencies (auto via shadcn):
+class-variance-authority==0.7.1  # cva
+clsx==2.1.1
+tailwind-merge==2.5.2
+tailwindcss-animate==1.0.7
+@radix-ui/react-slot==1.2.4
+lucide-react==0.441.0  # Icons
+
+# Full deps list below...
+
+next==14.2.15
+react==18.3.1
+react-dom==18.3.1
+@react-three/fiber==8.17.8
+@react-three/drei==9.120.2
+three==0.169.0
+framer-motion==11.5.4
+gsap==3.12.5
+@gsap/react==2.1.2
+recharts==2.12.7
+lucide-react==0.441.0
+axios==1.7.2
+zustand==4.5.5
+zod==3.23.8
+react-hook-form==7.53.0
+@hookform/resolvers==5.0.1
+# UI/ Styling
+tailwindcss==4.0.0-alpha.35
+tailwindcss-animate==1.0.7
+class-variance-authority==0.7.1
+clsx==2.1.1
+tailwind-merge==2.5.2
+# Dev
+typescript==5
+eslint==9
+eslint-config-next==14.2.15
+@types/node==20
+@types/react==18
+@types/react-dom==18
+@tailwindcss/postcss==4.0.0-alpha.35
+
+# Backend Dependencies (if using backend/services/)
+# Run in backend/: pip install -r requirements.txt
+# Assumed from api.ts endpoints (Express/FastAPI? Add actual)
+fastapi==0.115.0  # or flask
+uvicorn==0.30.6   # server
+sqlalchemy==2.0.35
+pydantic==2.9.2
+python-jose[cryptography]==3.3.0  # JWT
+passlib[bcrypt]==1.7.4  # hashing
+alembic==1.13.3  # migrations
+psycopg2-binary==2.9.9  # Postgres
+redis==5.2.1  # caching

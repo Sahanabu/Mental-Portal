@@ -6,6 +6,15 @@ import { Footer } from '@/components/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
+import type { Viewport } from 'next';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   title: 'Mentalport | Mental Wellness',
   description: 'Mental Wellness Self-Assessment Portal',

@@ -313,6 +313,18 @@
     50% { transform: scale(1.05); opacity: 1; }
   }
   
+  /* Responsive icons */
+  .responsive-icon {
+    @apply w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6;
+  }
+
+  /* Responsive 3D container - enhanced for very small screens */
+  @media (max-width: 480px) {
+    .scene-container {
+      @apply h-[50vh] min-h-[350px];
+    }
+  }
+
   /* Responsive breakpoint helpers */
   @media (max-width: 640px) {
     .hide-mobile { display: none; }

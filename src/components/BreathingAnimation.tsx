@@ -58,7 +58,8 @@ export function BreathingAnimation({
   };
 
   return (
-    <div className={cn("relative w-80 h-80 flex items-center justify-center", className)}>
+    <div className={cn("relative w-64 sm:w-72 md:w-80 h-64 sm:h-72 md:h-80 flex items-center justify-center", className)}>
+
       {/* Outer Ripple */}
       {isActive && (
         <motion.div
@@ -74,7 +75,8 @@ export function BreathingAnimation({
 
       {/* Main Breathing Circle */}
       <motion.div 
-        className="w-40 h-40 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl cursor-pointer"
+        className="w-24 sm:w-32 md:w-40 h-24 sm:h-32 md:h-40 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xl cursor-pointer"
+
         variants={circleVariants}
         animate={isActive ? phase : 'exhale'}
         style={!isActive ? { backgroundColor: 'hsl(var(--primary) / 0.5)', scale: 1 } : {}}

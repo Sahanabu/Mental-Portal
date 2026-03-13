@@ -48,9 +48,10 @@ export function ChatWindow({
     <div className={cn("flex flex-col h-full", className)}>
       {/* Chat Header */}
       <div className="flex bg-primary/5 border border-primary/20 backdrop-blur-md p-4 rounded-t-3xl items-center gap-3">
-        <div className="w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg">
-          <Bot className="w-6 h-6" />
+        <div className="w-10 sm:w-12 h-10 sm:h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg">
+          <Bot className="responsive-icon" />
         </div>
+
         <div>
           <h2 className="text-xl font-bold text-foreground">Aura</h2>
           <p className="text-xs text-muted-foreground font-medium">Your AI Companion • Always here</p>

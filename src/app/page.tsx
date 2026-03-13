@@ -61,7 +61,8 @@ export default function Home() {
            <Scroll html style={{ width: '100%' }}>
               
               {/* Page 1: Hero */}
-              <section ref={heroRef} className="h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 pt-16 sm:pt-20 relative">
+              <section ref={heroRef} className="h-screen min-h-[calc(100vh_-_theme(space.14))] sm:min-h-[calc(100vh_-_theme(space.16))] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 pt-8 sm:pt-16 md:pt-20 relative">
+
                 <div className="glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-2xl md:max-w-4xl text-center space-y-4 sm:space-y-6 md:space-y-8 backdrop-blur-2xl">
                   <h1 className="responsive-hero font-black tracking-tight text-primary drop-shadow-sm leading-tight">
                     Clarity for your <br />
@@ -82,7 +83,8 @@ export default function Home() {
               </section>
 
               {/* Page 2: Storytelling 1 */}
-              <section ref={section2Ref} className="h-screen flex items-center justify-start p-4 sm:p-6 md:p-8 md:pl-16 lg:pl-32 relative">
+              <section ref={section2Ref} className="h-screen min-h-[calc(100vh_-_theme(space.14))] sm:min-h-[calc(100vh_-_theme(space.16))] flex items-center justify-start p-4 sm:p-6 md:p-8 md:pl-16 lg:pl-32 relative">
+
                 <div className="space-y-4 sm:space-y-6 glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-md lg:max-w-lg">
                   <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">Discover Patterns</h2>
                   <p className="responsive-text text-muted-foreground">
@@ -92,7 +94,8 @@ export default function Home() {
               </section>
 
               {/* Page 3: Storytelling 2 */}
-              <section ref={section3Ref} className="h-screen flex items-center justify-end p-4 sm:p-6 md:p-8 md:pr-16 lg:pr-32 relative">
+              <section ref={section3Ref} className="h-screen min-h-[calc(100vh_-_theme(space.14))] sm:min-h-[calc(100vh_-_theme(space.16))] flex items-center justify-end p-4 sm:p-6 md:p-8 md:pr-16 lg:pr-32 relative">
+
                 <div className="space-y-4 sm:space-y-6 glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-md lg:max-w-lg text-right">
                   <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-emerald-500">Daily Rituals</h2>
                   <p className="responsive-text text-muted-foreground">
@@ -102,7 +105,8 @@ export default function Home() {
               </section>
 
               {/* Page 4: Call to Action */}
-              <section ref={ctaRef} className="h-screen flex items-center justify-center p-4 sm:p-6 md:p-8 relative">
+              <section ref={ctaRef} className="h-screen min-h-[calc(100vh_-_theme(space.14))] sm:min-h-[calc(100vh_-_theme(space.16))] flex items-center justify-center p-4 sm:p-6 md:p-8 relative">
+
                 <div className="glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-2xl md:max-w-4xl text-center space-y-6 sm:space-y-8 w-full">
                   <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
                     A Safe, Private Space

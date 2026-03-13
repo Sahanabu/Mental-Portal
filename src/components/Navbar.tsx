@@ -21,9 +21,10 @@ export function Navbar() {
     <nav className="fixed top-0 w-full z-50 glass border-b border-green-100/30">
       <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="font-bold text-lg sm:text-xl tracking-tight text-primary flex items-center gap-2">
-          <Brain className="w-5 h-5 sm:w-6 sm:h-6" />
+          <Brain className="responsive-icon" />
           <span className="hidden xs:inline">Mentalport</span>
           <span className="xs:hidden">MP</span>
+
         </Link>
         
         {/* Desktop Navigation */}
