@@ -88,6 +88,10 @@ export const aiAPI = {
     api.post('/ai/history-analysis', data),
   generateExercises: (data: { mood: string; language?: string }) =>
     api.post('/ai/generate-exercises', data),
+  generateVideoRecommendations: (data: { category: string; score: number; language?: string }) =>
+    api.post('/ai/video-recommendations', data),
+  generateMusicRecommendations: (data: { moodCategory: string; language?: string }) =>
+    api.post('/ai/music-recommendations', data),
 };
 
 // Token management

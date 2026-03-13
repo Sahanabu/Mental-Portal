@@ -67,5 +67,15 @@
     "confirm": "確認",
     "delete": "削除",
     "close": "閉じる"
+  },
+  "videos": {
+    "title": "あなたにおすすめの動画",
+    "description": "これらの動画は気分を改善するのに役立つかもしれません",
+    "watch": "動画を見る",
+    "loading": "最適な動画を探しています...",
+    "entertainment": "エンターテインメント",
+    "laughing": "笑い",
+    "relaxation": "リラックス",
+    "motivation": "モチベーション"
   }
 }

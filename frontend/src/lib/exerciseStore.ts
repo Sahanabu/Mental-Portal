@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { mentalHealthExercises } from './exercisesData';
 
 export interface Exercise {
   id: string;
@@ -6,10 +7,11 @@ export interface Exercise {
   description: string;
   duration: string;
   type: 'breathing' | 'stretching' | 'physical';
-  animationType: 'breathingCircle' | 'stretchGuide' | 'situpSimulation';
+  animationType: 'breathingCircle' | 'stretchGuide' | 'situpSimulation' | 'gifAnimation';
   steps: string[];
   status: 'pending' | 'in_progress' | 'completed' | 'abandoned' | 'deleted';
   progress?: number;
+  animationUrl?: string;
 }
 
 interface ExerciseState {
@@ -19,6 +21,7 @@ interface ExerciseState {
   updateExerciseProgress: (id: string, progress: number) => void;
   deleteExercise: (id: string) => void;
   clearExercises: () => void;
+  loadExercises: () => void;
 }
 
 export const useExerciseStore = create<ExerciseState>((set) => ({
@@ -41,4 +44,5 @@ export const useExerciseStore = create<ExerciseState>((set) => ({
       exercises: state.exercises.filter((ex) => ex.id !== id),
     })),
   clearExercises: () => set({ exercises: [] }),
+  loadExercises: () => set({ exercises: mentalHealthExercises }),
 }));

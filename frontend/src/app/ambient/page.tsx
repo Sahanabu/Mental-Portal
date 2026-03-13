@@ -1,24 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, CloudRain, Waves, Flame, Sparkles } from 'lucide-react';
+import { Play, Pause, CloudRain, Waves, Flame, Sparkles } from 'lucide-react';
 import { aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const soundscapes = [
-  { id: 'rain', name: 'Gentle Rain', icon: CloudRain, color: 'from-blue-900 to-slate-900' },
-  { id: 'ocean', name: 'Ocean Waves', icon: Waves, color: 'from-cyan-900 to-blue-900' },
-  { id: 'fire', name: 'Campfire', icon: Flame, color: 'from-orange-950 to-red-950' },
-  { id: 'cosmos', name: 'Cosmic Ambient', icon: Sparkles, color: 'from-indigo-950 to-purple-950' },
+  { id: 'rain', name: 'Gentle Rain', icon: CloudRain, color: 'from-blue-900 to-slate-900', src: '/ambient/gentlerain.mpeg' },
+  { id: 'ocean', name: 'Ocean Waves', icon: Waves, color: 'from-cyan-900 to-blue-900', src: '/ambient/oceanwaves.mpeg' },
+  { id: 'fire', name: 'Campfire', icon: Flame, color: 'from-orange-950 to-red-950', src: '/ambient/campfire.mpeg' },
+  { id: 'cosmos', name: 'Cosmic Ambient', icon: Sparkles, color: 'from-indigo-950 to-purple-950', src: '/ambient/cosmicambient.mpeg' },
 ];
 
 export default function AmbientPage() {
   const [activeSound, setActiveSound] = useState('ocean');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(50);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [aiGuidance, setAiGuidance] = useState<string>('');
   const { t, language } = useLanguage();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const fmt = (s: number) => {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const fetchGuidance = async () => {
@@ -34,10 +43,54 @@ export default function AmbientPage() {
     fetchGuidance();
   }, [language, t]);
 
+  // Sync audio src when active sound changes
+  useEffect(() => {
+    const sound = soundscapes.find(s => s.id === activeSound);
+    if (!sound || !audioRef.current) return;
+    const wasPlaying = isPlaying;
+    audioRef.current.pause();
+    audioRef.current.src = sound.src;
+    audioRef.current.load();
+    setCurrentTime(0);
+    setDuration(0);
+    if (wasPlaying) audioRef.current.play().catch(() => {});
+  }, [activeSound]);
+
+  // Sync play/pause
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      if (!audioRef.current.src || audioRef.current.src === window.location.href) {
+        const sound = soundscapes.find(s => s.id === activeSound);
+        if (sound) { audioRef.current.src = sound.src; audioRef.current.load(); }
+      }
+      audioRef.current.play().catch(() => setIsPlaying(false));
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying]);
+
+  // Audio time/duration listeners
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onTime = () => setCurrentTime(audio.currentTime);
+    const onDuration = () => setDuration(audio.duration);
+    audio.addEventListener('timeupdate', onTime);
+    audio.addEventListener('durationchange', onDuration);
+    audio.addEventListener('loadedmetadata', onDuration);
+    return () => {
+      audio.removeEventListener('timeupdate', onTime);
+      audio.removeEventListener('durationchange', onDuration);
+      audio.removeEventListener('loadedmetadata', onDuration);
+    };
+  }, []);
+
   const activeTheme = soundscapes.find(s => s.id === activeSound)?.color || soundscapes[0].color;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col relative overflow-hidden transition-colors duration-[3000ms]">
+      <audio ref={audioRef} loop preload="none" />
       {/* Dynamic Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${activeTheme} transition-all duration-[3000ms] -z-20`} />
       
@@ -118,17 +171,27 @@ export default function AmbientPage() {
               </div>
             </div>
 
-             <div className="flex items-center gap-4">
-                <Volume2 className="w-5 h-5 text-white/50" />
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  value={volume}
-                  onChange={(e) => setVolume(Number(e.target.value))}
-                  className="w-full accent-white h-2 rounded-lg bg-white/20 appearance-none outline-none cursor-pointer"
-                />
-             </div>
+            {/* Seek bar + timer */}
+            <div className="space-y-2">
+              <input
+                type="range"
+                min="0"
+                max={duration || 100}
+                step="0.1"
+                value={currentTime}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setCurrentTime(val);
+                  if (audioRef.current) audioRef.current.currentTime = val;
+                }}
+                className="w-full accent-white h-2 rounded-lg bg-white/20 appearance-none outline-none cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-white/50 font-mono tabular-nums">
+                <span>{fmt(currentTime)}</span>
+                <span>{duration > 0 ? fmt(duration) : '--:--'}</span>
+              </div>
+            </div>
+
           </div>
         </motion.div>
       </div>

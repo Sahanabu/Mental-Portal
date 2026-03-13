@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ExercisesSection } from '@/components/ExercisesSection';
 
 const localResources = [
   {
@@ -139,6 +140,8 @@ export default function ResourcesPage() {
           )
         })}
       </div>
+
+      <ExercisesSection />
 
       <motion.div 
         initial={{ opacity: 0 }}

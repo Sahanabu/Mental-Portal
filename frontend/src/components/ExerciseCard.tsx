@@ -50,6 +50,32 @@ export function ExerciseCard({ exercise, translations }: ExerciseCardProps) {
             onProgressUpdate={(progress) => updateExerciseProgress(exercise.id, progress)}
           />
         );
+      case 'gifAnimation':
+        return (
+          <div className="flex flex-col items-center space-y-4">
+            {exercise.animationUrl && (
+              <img
+                src={exercise.animationUrl}
+                alt={exercise.title}
+                className="w-full max-w-md h-64 object-contain rounded-2xl shadow-2xl mx-auto bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white/20"
+              />
+            )}
+            <div className="text-center max-w-md">
+              <h4 className="text-lg font-bold text-foreground mb-2">Follow Along</h4>
+              <ol className="text-sm space-y-1 text-muted-foreground max-h-32 overflow-y-auto">
+                {exercise.steps.slice(0, 4).map((step, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-primary font-bold w-5 flex-shrink-0">{idx + 1}.</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            {exercise.steps.length > 4 && (
+              <p className="text-xs text-primary italic">...and more. Follow the animation!</p>
+            )}
+          </div>
+        );
       default:
         return null;
     }
@@ -69,9 +95,11 @@ export function ExerciseCard({ exercise, translations }: ExerciseCardProps) {
         </div>
         <button
           onClick={handleDelete}
+          aria-label={`Delete ${exercise.title}`}
+          title={`Delete ${exercise.title}`}
           className="p-2 hover:bg-red-100 rounded-full transition-colors"
         >
-          <Trash2 className="w-4 h-4 text-red-500" />
+          <Trash2 className="w-4 h-4 text-red-500" aria-hidden="true" />
         </button>
       </div>
 

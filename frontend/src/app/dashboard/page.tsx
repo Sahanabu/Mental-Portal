@@ -5,6 +5,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Brain, HeartPulse, List, Target, TrendingUp, User, MessageSquare, Shield, Trash2 } from 'lucide-react';
 import { MoodChart } from '@/components/MoodChart';
+import { RecoveryVideoSection } from '@/components/RecoveryVideoSection';
+import { MusicTherapySection } from '@/components/MusicTherapySection';
 import Link from 'next/link';
 import { moodAPI, chatAPI, authAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -286,6 +288,16 @@ function DashboardContent() {
           </Link>
         </div>
       </motion.div>
+
+      {/* AI Mood Recovery Videos — only shown when coming from assessment */}
+      {rawScore && (
+        <RecoveryVideoSection category={status} score={score} />
+      )}
+
+      {/* AI Music Therapy — only shown when coming from assessment */}
+      {rawScore && (
+        <MusicTherapySection moodCategory={status} />
+      )}
 
       {/* Conversations Section */}
       {localStorage.getItem('token') && conversations.length > 0 && (
