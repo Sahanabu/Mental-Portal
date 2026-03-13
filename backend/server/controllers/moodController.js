@@ -4,8 +4,8 @@ exports.logMood = async (req, res) => {
   try {
     const { mood } = req.body;
 
-    if (!mood || !['happy', 'neutral', 'sad', 'anxious'].includes(mood)) {
-      return res.status(400).json({ message: 'Valid mood value is required (happy, neutral, sad, anxious)' });
+    if (!mood || !['happy', 'neutral', 'sad', 'anxious', 'stressed', 'tired'].includes(mood)) {
+      return res.status(400).json({ message: 'Valid mood value is required (happy, neutral, sad, anxious, stressed, tired)' });
     }
 
     const moodLog = new MoodLog({
@@ -61,7 +61,9 @@ const getMoodScore = (mood) => {
     happy: 8,
     neutral: 5,
     sad: 3,
-    anxious: 2
+    anxious: 2,
+    stressed: 2,
+    tired: 4
   };
   return moodScores[mood] || 5;
 };

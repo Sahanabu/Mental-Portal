@@ -140,18 +140,22 @@ exports.generateExercises = async (req, res) => {
 
     const prompt = `User mood: ${mood}
 
-Suggest 3 wellness exercises suitable for this mood.
+Suggest 3 HOME-FRIENDLY wellness exercises (no gym equipment needed) suitable for this mood.
 
 Each exercise must include:
 - title
-- description
+- description (mention "no equipment" or "at home" or "bodyweight")
 - duration
 - type (breathing, stretching, or physical)
-- animationType (breathingCircle, stretchGuide, or situpSimulation)
-- steps (array of 3 strings)
+- animationType: always use "gifAnimation" for stretching and physical, "breathingCircle" for breathing only
+- animationUrl: pick one from this list based on exercise type:
+  stretching (home): "/exercises/7inpWch.gif" or "/exercises/8xUv4J7.gif" or "/exercises/3tAXPQ6.gif" or "/exercises/3XFdb1Z.gif" or "/exercises/7zdxRTl.gif"
+  physical (home): "/exercises/6sMAmNv.gif" or "/exercises/5bpPTHv.gif" or "/exercises/4dF3maG.gif" or "/exercises/6HiHHe0.gif" or "/exercises/6kSxYnw.gif"
+  breathing: leave animationUrl empty string
+- steps (array of 3-4 detailed home-friendly instructions)
 
-Return ONLY valid JSON array format:
-[{"title":"...","description":"...","duration":"...","type":"...","animationType":"...","steps":["...","...","..."]}]`;
+Return ONLY valid JSON array:
+[{"title":"...","description":"...","duration":"...","type":"...","animationType":"...","animationUrl":"...","steps":["...","...","..."]}]`;
 
     const aiMessage = await getAIResponse(prompt, language);
 
@@ -179,82 +183,178 @@ const getFallbackExercises = (mood) => {
     happy: [
       {
         title: "Energizing Breath",
-        description: "Boost your positive energy",
+        description: "Boost your positive energy with deep breathing",
         duration: "2 minutes",
         type: "breathing",
         animationType: "breathingCircle",
+        animationUrl: "",
         steps: ["Inhale deeply for 4 seconds", "Hold for 2 seconds", "Exhale slowly for 4 seconds"]
       },
       {
-        title: "Victory Stretch",
-        description: "Celebrate your good mood",
+        title: "Standing Side Stretch",
+        description: "No equipment needed — open up your sides at home",
         duration: "3 minutes",
         type: "stretching",
-        animationType: "stretchGuide",
-        steps: ["Raise arms overhead", "Stretch to the sky", "Hold and breathe"]
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/8xUv4J7.gif",
+        steps: ["Stand tall with feet hip-width apart", "Raise one arm and lean to the opposite side", "Hold 10 seconds, switch sides"]
       },
       {
-        title: "Power Squats",
-        description: "Channel your energy",
-        duration: "2 minutes",
+        title: "Bodyweight Squats",
+        description: "Classic home exercise — no gym needed",
+        duration: "3 minutes",
         type: "physical",
-        animationType: "situpSimulation",
-        steps: ["Stand with feet apart", "Lower into squat", "Rise back up"]
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/6sMAmNv.gif",
+        steps: ["Stand with feet shoulder-width apart", "Lower hips until thighs are parallel to floor", "Push through heels to stand back up"]
       }
     ],
     anxious: [
       {
-        title: "Calming Breath",
-        description: "Reduce anxiety and tension",
+        title: "4-7-8 Calming Breath",
+        description: "Proven technique to reduce anxiety fast",
         duration: "3 minutes",
         type: "breathing",
         animationType: "breathingCircle",
+        animationUrl: "",
         steps: ["Inhale for 4 seconds", "Hold for 4 seconds", "Exhale for 6 seconds"]
       },
       {
-        title: "Shoulder Release",
-        description: "Release tension",
+        title: "Seated Neck Rolls",
+        description: "Do this anywhere — chair or floor",
         duration: "2 minutes",
         type: "stretching",
-        animationType: "stretchGuide",
-        steps: ["Roll shoulders back", "Hold for 5 seconds", "Repeat forward"]
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/7inpWch.gif",
+        steps: ["Sit comfortably and drop chin to chest", "Slowly roll head to right shoulder", "Continue rolling to left, repeat 5 times"]
       },
       {
-        title: "Gentle Walk",
-        description: "Light movement to calm",
-        duration: "5 minutes",
+        title: "Floor Crunches",
+        description: "Simple core exercise on your mat at home",
+        duration: "3 minutes",
         type: "physical",
-        animationType: "situpSimulation",
-        steps: ["Walk slowly", "Focus on breathing", "Stay present"]
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/6HiHHe0.gif",
+        steps: ["Lie on your back, knees bent", "Place hands behind head lightly", "Lift shoulders off floor, lower slowly"]
       }
     ],
     sad: [
       {
         title: "Uplifting Breath",
-        description: "Lift your spirits",
+        description: "Breathe in positivity, breathe out tension",
         duration: "3 minutes",
         type: "breathing",
         animationType: "breathingCircle",
-        steps: ["Breathe in positivity", "Hold the feeling", "Release negativity"]
+        animationUrl: "",
+        steps: ["Breathe in slowly for 4 seconds", "Hold and feel the calm", "Release fully for 6 seconds"]
       },
       {
-        title: "Heart Opener",
-        description: "Open your chest",
-        duration: "2 minutes",
+        title: "Child's Pose Stretch",
+        description: "Gentle floor stretch — just a yoga mat needed",
+        duration: "3 minutes",
         type: "stretching",
-        animationType: "stretchGuide",
-        steps: ["Clasp hands behind back", "Lift chest up", "Breathe deeply"]
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/3tAXPQ6.gif",
+        steps: ["Kneel on the floor and sit back on heels", "Stretch arms forward on the floor", "Rest forehead down, breathe deeply"]
       },
       {
-        title: "Light Movement",
-        description: "Gentle activity",
+        title: "Standing March",
+        description: "Light indoor cardio to lift your mood",
         duration: "3 minutes",
         type: "physical",
-        animationType: "situpSimulation",
-        steps: ["Move gently", "Stay mindful", "Be kind to yourself"]
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/5bpPTHv.gif",
+        steps: ["Stand in place with good posture", "Lift knees alternately to hip height", "Swing arms naturally, keep a steady pace"]
+      }
+    ],
+    stressed: [
+      {
+        title: "Box Breathing",
+        description: "Used by Navy SEALs to reduce stress instantly",
+        duration: "4 minutes",
+        type: "breathing",
+        animationType: "breathingCircle",
+        animationUrl: "",
+        steps: ["Inhale deeply for 5 seconds", "Hold for 3 seconds", "Exhale slowly for 7 seconds"]
+      },
+      {
+        title: "Doorway Chest Opener",
+        description: "Use any doorframe at home",
+        duration: "2 minutes",
+        type: "stretching",
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/8xUv4J7.gif",
+        steps: ["Stand in a doorway, arms at 90 degrees on frame", "Gently lean forward until you feel chest stretch", "Hold 20 seconds, breathe deeply"]
+      },
+      {
+        title: "Wall Push-ups",
+        description: "No floor needed — do these against any wall",
+        duration: "2 minutes",
+        type: "physical",
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/4dF3maG.gif",
+        steps: ["Stand arm's length from wall, palms flat on it", "Bend elbows to bring chest toward wall", "Push back to start, repeat 10-15 times"]
+      }
+    ],
+    tired: [
+      {
+        title: "Energizing Breath",
+        description: "Wake up your body with quick breathing",
+        duration: "2 minutes",
+        type: "breathing",
+        animationType: "breathingCircle",
+        animationUrl: "",
+        steps: ["Quick inhale through nose for 2 seconds", "Hold for 2 seconds", "Sharp exhale through mouth for 2 seconds"]
+      },
+      {
+        title: "Cat-Cow Stretch",
+        description: "Floor stretch to wake up your spine",
+        duration: "3 minutes",
+        type: "stretching",
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/3XFdb1Z.gif",
+        steps: ["Get on hands and knees on the floor", "Arch back up like a cat, tuck chin", "Drop belly down, lift head — repeat slowly"]
+      },
+      {
+        title: "Jumping Jacks",
+        description: "Classic home cardio to boost energy fast",
+        duration: "2 minutes",
+        type: "physical",
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/5bpPTHv.gif",
+        steps: ["Stand with feet together, arms at sides", "Jump feet out while raising arms overhead", "Jump back to start, repeat at a brisk pace"]
+      }
+    ],
+    neutral: [
+      {
+        title: "Balanced Breath",
+        description: "Maintain your calm and centered state",
+        duration: "3 minutes",
+        type: "breathing",
+        animationType: "breathingCircle",
+        animationUrl: "",
+        steps: ["Inhale for 4 seconds", "Hold for 4 seconds", "Exhale for 4 seconds"]
+      },
+      {
+        title: "Seated Forward Fold",
+        description: "Simple hamstring stretch on the floor",
+        duration: "3 minutes",
+        type: "stretching",
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/7zdxRTl.gif",
+        steps: ["Sit on floor with legs straight out", "Reach hands toward your feet", "Hold the stretch for 20 seconds, breathe"]
+      },
+      {
+        title: "Bodyweight Lunges",
+        description: "No equipment — do these in your living room",
+        duration: "3 minutes",
+        type: "physical",
+        animationType: "gifAnimation",
+        animationUrl: "/exercises/6kSxYnw.gif",
+        steps: ["Stand tall with feet together", "Step one foot forward and lower back knee toward floor", "Push back to start, alternate legs"]
       }
     ]
   };
 
-  return exercises[mood] || exercises.anxious;
+  return exercises[mood] || exercises.neutral;
 };

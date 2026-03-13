@@ -8,7 +8,7 @@ const moodLogSchema = new mongoose.Schema({
   },
   mood: {
     type: String,
-    enum: ['happy', 'neutral', 'sad', 'anxious'],
+    enum: ['happy', 'neutral', 'sad', 'anxious', 'stressed', 'tired'],
     required: true
   },
   createdAt: {
