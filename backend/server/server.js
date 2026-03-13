@@ -10,6 +10,7 @@ const assessmentRoutes = require('./routes/assessmentRoutes');
 const moodRoutes = require('./routes/moodRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const resourcesRoutes = require('./routes/resourcesRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/api/assessment', assessmentRoutes);
 app.use('/api/mood', moodRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/resources', resourcesRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

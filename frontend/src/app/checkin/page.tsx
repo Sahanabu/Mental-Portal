@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 import { MoodCard } from '@/components/MoodCard';
 import { useMood } from '@/hooks/useMood';
+import { aiAPI } from '@/services/api';
 
 const moods = [
   { id: 'happy', emoji: '😊', label: 'Happy', color: 'from-green-400 to-emerald-500', shadow: 'shadow-green-500/30' },
@@ -16,7 +17,8 @@ const moods = [
 export default function CheckinPage() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState(false);
-  const { logMood, isLoading, fetchMoodHistory } = useMood();
+  const [aiInsight, setAiInsight] = useState<string>('');
+  const { logMood, isLoading, fetchMoodHistory, moodHistory } = useMood();
 
   const handleLog = async () => {
     if (!selectedMood) return;
@@ -24,10 +26,16 @@ export default function CheckinPage() {
     const result = await logMood(selectedMood);
     if (result.success) {
       setIsLogged(true);
-      // Refresh mood history to get latest data from MongoDB
-      setTimeout(() => {
-        fetchMoodHistory();
-      }, 500);
+      fetchMoodHistory();
+      
+      // Get AI insight
+      try {
+        const recentMoods = moodHistory.slice(-7).map(m => m.mood);
+        const response = await aiAPI.getCheckinInsights({ mood: selectedMood, recentMoods });
+        setAiInsight(response.data.insight);
+      } catch (error) {
+        setAiInsight('Thank you for checking in. Regular mood tracking helps you understand your patterns.');
+      }
     }
   };
 
@@ -78,7 +86,22 @@ export default function CheckinPage() {
                <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
              </div>
              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Mood Logged!</h2>
-             <p className="text-muted-foreground text-base sm:text-lg">Thank you for checking in. Tracking your feelings is a great step towards mindfulness.</p>
+             <p className="text-muted-foreground text-base sm:text-lg mb-6">Thank you for checking in. Tracking your feelings is a great step towards mindfulness.</p>
+             
+             {aiInsight && (
+               <motion.div
+                 initial={{ opacity: 0, y: 10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.3 }}
+                 className="bg-primary/10 border border-primary/20 rounded-2xl p-4 max-w-md"
+               >
+                 <div className="flex items-center gap-2 mb-2">
+                   <Sparkles className="w-4 h-4 text-primary" />
+                   <span className="text-sm font-bold text-primary">AI Insight</span>
+                 </div>
+                 <p className="text-sm text-foreground/80 text-left">{aiInsight}</p>
+               </motion.div>
+             )}
           </motion.div>
         )}
       </motion.div>

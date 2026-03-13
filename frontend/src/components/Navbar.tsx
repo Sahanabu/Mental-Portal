@@ -1,11 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { Brain, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Brain, Menu, X, LogOut, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { tokenManager } from '@/services/api';
+import { useRouter } from 'next/navigation';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setIsAuthenticated(tokenManager.isAuthenticated());
+  }, []);
+
+  const handleLogout = () => {
+    tokenManager.removeToken();
+    setIsAuthenticated(false);
+    setIsMenuOpen(false);
+    router.push('/');
+  };
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
@@ -39,15 +54,27 @@ export function Navbar() {
               {item.label}
             </Link>
           ))}
-          <Link href="/auth" className="text-xs xl:text-sm font-medium hover:text-primary transition-colors touch-target">
-            Sign In
-          </Link>
-          <Link 
-             href="/assessment" 
-             className="text-xs xl:text-sm font-medium bg-primary text-primary-foreground px-3 py-2 xl:px-4 xl:py-2 rounded-full hover:bg-primary/90 transition-colors touch-target"
-          >
-            Get Started
-          </Link>
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="text-xs xl:text-sm font-medium hover:text-red-600 transition-colors touch-target flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
+          ) : (
+            <>
+              <Link href="/auth" className="text-xs xl:text-sm font-medium hover:text-primary transition-colors touch-target">
+                Sign In
+              </Link>
+              <Link 
+                href="/assessment" 
+                className="text-xs xl:text-sm font-medium bg-primary text-primary-foreground px-3 py-2 xl:px-4 xl:py-2 rounded-full hover:bg-primary/90 transition-colors touch-target"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -74,20 +101,32 @@ export function Navbar() {
               </Link>
             ))}
             <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-green-100/30">
-              <Link 
-                href="/auth" 
-                className="text-sm font-medium hover:text-primary transition-colors touch-target text-center py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Sign In
-              </Link>
-              <Link 
-                href="/assessment" 
-                className="text-sm font-medium bg-primary text-primary-foreground px-4 py-2 rounded-full hover:bg-primary/90 transition-colors touch-target text-center"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Get Started
-              </Link>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-medium hover:text-red-600 transition-colors touch-target text-center py-2 flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              ) : (
+                <>
+                  <Link 
+                    href="/auth" 
+                    className="text-sm font-medium hover:text-primary transition-colors touch-target text-center py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link 
+                    href="/assessment" 
+                    className="text-sm font-medium bg-primary text-primary-foreground px-4 py-2 rounded-full hover:bg-primary/90 transition-colors touch-target text-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

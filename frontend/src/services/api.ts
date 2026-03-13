@@ -45,14 +45,36 @@ export const moodAPI = {
 
 // Chat API
 export const chatAPI = {
-  sendMessage: (message: string) =>
-    api.post('/chat', { message }),
+  sendMessage: (message: string, sessionId?: string) =>
+    api.post('/chat', { message, sessionId }),
+  getConversations: (limit?: number) =>
+    api.get('/chat/conversations', { params: { limit } }),
+  getConversation: (sessionId: string) =>
+    api.get(`/chat/conversations/${sessionId}`),
+  deleteConversation: (sessionId: string) =>
+    api.delete(`/chat/conversations/${sessionId}`),
+  deleteAllConversations: () =>
+    api.delete('/chat/conversations'),
 };
 
 // Resources API
 export const resourcesAPI = {
   get: () =>
     api.get('/resources'),
+};
+
+// AI API
+export const aiAPI = {
+  getBreathingTips: (data: { currentMood?: string; stressLevel?: string }) =>
+    api.post('/ai/breathing-tips', data),
+  getAmbientGuidance: (data: { timeOfDay?: string; mood?: string }) =>
+    api.post('/ai/ambient-guidance', data),
+  getResourceRecommendations: (data: { userConcerns?: string; assessmentScore?: number }) =>
+    api.post('/ai/resource-recommendations', data),
+  getCheckinInsights: (data: { mood: string; recentMoods?: string[] }) =>
+    api.post('/ai/checkin-insights', data),
+  getHistoryAnalysis: (data: { assessments?: any[]; moodLogs?: any[] }) =>
+    api.post('/ai/history-analysis', data),
 };
 
 // Token management
@@ -65,5 +87,9 @@ export const tokenManager = {
   },
   removeToken: () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+  },
+  isAuthenticated: () => {
+    return !!localStorage.getItem('token');
   },
 };

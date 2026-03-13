@@ -213,6 +213,15 @@
     @apply bg-green-400/30 rounded-full;
   }
   
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  * {
+    scroll-behavior: smooth;
+  }
+  
   /* Responsive utilities */
   .responsive-text {
     @apply text-sm sm:text-base md:text-lg;

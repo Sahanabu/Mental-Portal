@@ -1,6 +1,6 @@
 'use client';
 
-import { useScroll, Float, Environment, CameraControls, Sparkles } from '@react-three/drei';
+import { Float, Environment, Sparkles } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
@@ -54,19 +54,24 @@ function MindParticles() {
   );
 }
 
-// Intercepts R3F scroll to drive animations
-function SceneController() {
-  const scroll = useScroll();
+function SceneController({ scrollProgress }: { scrollProgress: number }) {
   const brainRef = useRef<THREE.Group>(null);
+  const targetRotation = useRef(0);
+  const targetY = useRef(0);
+  const targetZ = useRef(8);
   
   useFrame((state) => {
      if (!brainRef.current) return;
-     // Rotate brain based on scroll
-     brainRef.current.rotation.y = scroll.offset * Math.PI * 2;
-     brainRef.current.position.y = THREE.MathUtils.lerp(brainRef.current.position.y, scroll.offset * 2 - 1, 0.1);
      
-     // Zoom camera slightly based on scroll
-     state.camera.position.z = THREE.MathUtils.lerp(8, 5, scroll.offset);
+     // Smooth interpolation targets
+     targetRotation.current = scrollProgress * Math.PI * 2;
+     targetY.current = scrollProgress * 2 - 1;
+     targetZ.current = THREE.MathUtils.lerp(8, 5, scrollProgress);
+     
+     // Apply smooth lerp
+     brainRef.current.rotation.y = THREE.MathUtils.lerp(brainRef.current.rotation.y, targetRotation.current, 0.05);
+     brainRef.current.position.y = THREE.MathUtils.lerp(brainRef.current.position.y, targetY.current, 0.05);
+     state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ.current, 0.05);
   });
 
   return (
@@ -78,13 +83,13 @@ function SceneController() {
   );
 }
 
-export function Scene() {
+export function Scene({ scrollProgress = 0 }: { scrollProgress?: number }) {
   return (
     <>
       <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
       <Sparkles count={500} scale={12} size={2} speed={0.4} opacity={0.15} color="#10b981" />
-      <SceneController />
+      <SceneController scrollProgress={scrollProgress} />
       <Environment preset="city" />
     </>
   );

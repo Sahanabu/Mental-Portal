@@ -23,6 +23,7 @@ export default function AuthPage() {
       if (isLogin) {
         const response = await authAPI.login({ email: formData.username, password: formData.password });
         tokenManager.setToken(response.data.token);
+        localStorage.setItem('userId', response.data.userId);
         router.push('/assessment');
       } else {
         const response = await authAPI.register({ 
@@ -31,6 +32,7 @@ export default function AuthPage() {
           password: formData.password 
         });
         tokenManager.setToken(response.data.token);
+        localStorage.setItem('userId', response.data.userId);
         router.push('/assessment');
       }
     } catch (err: any) {
@@ -86,10 +88,10 @@ export default function AuthPage() {
           )}
           
           <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-semibold text-foreground ml-1">Username</label>
+            <label className="text-xs sm:text-sm font-semibold text-foreground ml-1">Email</label>
             <input 
-              type="text" 
-              placeholder="your_username"
+              type="email" 
+              placeholder="your.email@example.com"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               required

@@ -4,21 +4,28 @@ const User = require('../models/User');
 
 exports.register = async (req, res) => {
   try {
-    const { username, password, anonymous } = req.body;
+    const { name, email, password, anonymous } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const existingUser = await User.findOne({ username });
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return res.status(400).json({ message: 'Username already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = new User({
-      username,
+      email: email.toLowerCase(),
+      name: name || '',
       passwordHash,
       anonymous: anonymous || false
     });
@@ -30,7 +37,9 @@ exports.register = async (req, res) => {
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      userId: user._id
+      userId: user._id,
+      email: user.email,
+      name: user.name
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -39,13 +48,13 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -60,7 +69,9 @@ exports.login = async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      userId: user._id
+      userId: user._id,
+      email: user.email,
+      name: user.name
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

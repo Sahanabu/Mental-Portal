@@ -1,7 +1,9 @@
 'use client';
 
-import { Phone, ExternalLink, ShieldAlert, HeartPulse, BookOpen, UserPlus } from 'lucide-react';
+import { Phone, ExternalLink, ShieldAlert, HeartPulse, BookOpen, UserPlus, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { aiAPI } from '@/services/api';
 
 const localResources = [
   {
@@ -37,6 +39,20 @@ const localResources = [
 ];
 
 export default function ResourcesPage() {
+  const [aiRecommendations, setAiRecommendations] = useState<string>('');
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const response = await aiAPI.getResourceRecommendations({ userConcerns: 'general wellness' });
+        setAiRecommendations(response.data.recommendations);
+      } catch (error) {
+        setAiRecommendations('Explore support groups, mental health apps, and professional counseling for personalized guidance.');
+      }
+    };
+    fetchRecommendations();
+  }, []);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] p-6 md:p-12 max-w-7xl mx-auto pt-20">
       <header className="mb-16 text-center max-w-3xl mx-auto">
@@ -45,6 +61,20 @@ export default function ResourcesPage() {
           You are not alone. Whether you need immediate help or are just looking for ways to improve your mental well-being, these resources are here for you.
         </p>
       </header>
+
+      {aiRecommendations && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-mobile p-6 rounded-3xl mb-8 max-w-3xl mx-auto border-2 border-primary/20"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-primary">AI Recommendations for You</h2>
+          </div>
+          <p className="text-sm sm:text-base text-foreground/80">{aiRecommendations}</p>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {localResources.map((resource, index) => {

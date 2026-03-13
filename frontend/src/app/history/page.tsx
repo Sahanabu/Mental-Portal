@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, TrendingUp, Activity } from 'lucide-react';
-import { assessmentAPI } from '@/services/api';
+import { Calendar, TrendingUp, Activity, Sparkles } from 'lucide-react';
+import { assessmentAPI, moodAPI, aiAPI } from '@/services/api';
 
 interface Assessment {
   id: string;
@@ -16,6 +16,7 @@ interface Assessment {
 export default function HistoryPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -29,6 +30,20 @@ export default function HistoryPage() {
           answers: assessment.answers
         })) || [];
         setAssessments(formattedData);
+        
+        // Get AI analysis if there are assessments
+        if (formattedData.length > 0) {
+          try {
+            const moodResponse = await moodAPI.getHistory();
+            const analysis = await aiAPI.getHistoryAnalysis({
+              assessments: formattedData,
+              moodLogs: moodResponse.data.moodLogs || []
+            });
+            setAiAnalysis(analysis.data.analysis);
+          } catch (error) {
+            setAiAnalysis('Your consistent tracking shows dedication to your mental wellness journey.');
+          }
+        }
       } catch (error) {
         console.log('Failed to fetch assessment history');
         setAssessments([]);
@@ -139,12 +154,28 @@ export default function HistoryPage() {
           </div>
 
           {assessments.length > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="glass-mobile responsive-padding rounded-3xl"
-            >
+            <>
+              {aiAnalysis && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="glass-mobile p-6 rounded-3xl mb-6 border-2 border-primary/20"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <h2 className="text-lg font-bold text-primary">AI Progress Analysis</h2>
+                  </div>
+                  <p className="text-sm sm:text-base text-foreground/80">{aiAnalysis}</p>
+                </motion.div>
+              )}
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="glass-mobile responsive-padding rounded-3xl"
+              >
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-6 h-6 text-primary" />
                 <h2 className="text-xl font-bold">Progress Overview</h2>
@@ -174,6 +205,7 @@ export default function HistoryPage() {
                 </div>
               </div>
             </motion.div>
+            </>
           )}
         </>
       )}

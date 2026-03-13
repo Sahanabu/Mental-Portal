@@ -3,9 +3,9 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Brain, HeartPulse, List, Target, TrendingUp } from 'lucide-react';
+import { Activity, Brain, HeartPulse, List, Target, TrendingUp, User, MessageSquare, Shield, Trash2 } from 'lucide-react';
 import { MoodChart } from '@/components/MoodChart';
-import { moodAPI } from '@/services/api';
+import { moodAPI, chatAPI } from '@/services/api';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -14,33 +14,40 @@ function DashboardContent() {
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [userName, setUserName] = useState<string>('');
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [showConversations, setShowConversations] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
+      // Get user info from localStorage
+      const email = localStorage.getItem('userEmail') || 'Anonymous User';
+      const name = localStorage.getItem('userName') || '';
+      setUserEmail(email);
+      setUserName(name);
+
       if (rawScore) {
         setScore(parseInt(rawScore, 10));
-        // Get recommendations from stored assessment
         const stored = localStorage.getItem('lastAssessment');
         if (stored) {
           const data = JSON.parse(stored);
           setRecommendations(data.recommendations || []);
         }
       } else {
-        setScore(4); // Default mock
+        setScore(4);
       }
 
-      // Fetch real mood data from MongoDB
+      // Fetch mood data
       try {
         const response = await moodAPI.getHistory();
         if (response.data.moodLogs && response.data.moodLogs.length > 0) {
-          // Transform mood data for chart
           const chartData = response.data.moodLogs.map((log: any) => ({
             name: new Date(log.date).toLocaleDateString('en-US', { weekday: 'short' }),
             mood: log.score
           }));
           setWeeklyData(chartData);
         } else {
-          // Default data if no mood logs
           setWeeklyData([
             { name: 'Mon', mood: 5 },
             { name: 'Tue', mood: 5 },
@@ -63,11 +70,42 @@ function DashboardContent() {
           { name: 'Sun', mood: 5 },
         ]);
       }
+
+      // Fetch conversations
+      try {
+        const convResponse = await chatAPI.getConversations(5);
+        setConversations(convResponse.data.conversations || []);
+      } catch (error) {
+        console.log('No conversations found');
+      }
+
       setIsLoading(false);
     };
 
     loadData();
   }, [rawScore]);
+
+  const handleDeleteConversation = async (sessionId: string) => {
+    if (confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+      try {
+        await chatAPI.deleteConversation(sessionId);
+        setConversations(conversations.filter(c => c.sessionId !== sessionId));
+      } catch (error) {
+        alert('Failed to delete conversation');
+      }
+    }
+  };
+
+  const handleDeleteAllConversations = async () => {
+    if (confirm('Are you sure you want to delete ALL conversations? This action cannot be undone.')) {
+      try {
+        await chatAPI.deleteAllConversations();
+        setConversations([]);
+      } catch (error) {
+        alert('Failed to delete conversations');
+      }
+    }
+  };
 
   if (score === null || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading dashboard...</div>;
 
@@ -91,37 +129,56 @@ function DashboardContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen p-4 sm:p-6 md:p-8 lg:p-12 space-y-6 sm:space-y-8 max-w-7xl mx-auto pt-16 sm:pt-20 md:pt-24">
-      <header className="flex flex-col gap-2 relative z-10 w-full mb-2 sm:mb-4">
-        <h1 className="responsive-heading font-extrabold tracking-tight">Your Wellness Overview</h1>
-        <p className="text-muted-foreground responsive-text">Here is a snapshot of your recent assessment and mood trends.</p>
+    <div className="flex flex-col min-h-screen p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto pt-20 sm:pt-24">
+      {/* User Profile Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-mobile p-6 rounded-2xl flex items-center gap-4 border-2 border-primary/20"
+      >
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <User className="w-8 h-8 text-primary" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-xl font-bold">{userName || 'Welcome'}</h2>
+          <p className="text-sm text-muted-foreground">{userEmail}</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-green-600">
+          <Shield className="w-4 h-4" />
+          <span>Encrypted</span>
+        </div>
+      </motion.div>
+
+      <header className="flex flex-col gap-2">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">Your Wellness Overview</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Here is a snapshot of your recent assessment and mood trends.</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Score Card */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="col-span-1 glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4 shadow-xl relative overflow-hidden"
+          className="col-span-1 glass-mobile p-6 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center space-y-4 shadow-xl relative overflow-hidden"
         >
-          <div className="absolute -top-12 sm:-top-16 md:-top-24 -right-12 sm:-right-16 md:-right-24 w-24 sm:w-32 md:w-48 h-24 sm:h-32 md:h-48 bg-primary/20 rounded-full blur-2xl sm:blur-3xl z-0"></div>
+          <div className="absolute -top-16 -right-16 w-32 h-32 sm:w-48 sm:h-48 bg-primary/20 rounded-full blur-3xl"></div>
           
-          <h2 className="text-base sm:text-lg md:text-xl font-bold text-foreground/80 z-10 uppercase tracking-widest flex items-center gap-2">
-            <Target className="w-4 h-4 sm:w-5 sm:h-5" /> Current Status
+          <h2 className="text-sm sm:text-base font-bold text-foreground/80 uppercase tracking-widest flex items-center gap-2">
+            <Target className="w-4 h-4" /> Current Status
           </h2>
-          <div className={`mt-3 sm:mt-4 w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full flex items-center justify-center bg-gradient-to-tr ${colorClass} shadow-2xl relative z-10`}>
+          <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center bg-gradient-to-tr ${colorClass} shadow-2xl relative`}>
             <div className="w-[85%] h-[85%] bg-background rounded-full flex flex-col items-center justify-center">
-               <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-tr text-foreground">
+               <span className="text-4xl sm:text-5xl font-black text-foreground">
                  {score}
                </span>
-               <span className="text-xs uppercase font-bold text-muted-foreground mt-1">/ 27</span>
+               <span className="text-xs uppercase font-bold text-muted-foreground">/ 27</span>
             </div>
           </div>
-          <p className={`text-lg sm:text-xl md:text-2xl font-black uppercase tracking-wider bg-clip-text text-transparent bg-gradient-to-r ${colorClass} z-10 mt-2`}>
+          <p className={`text-xl sm:text-2xl font-black uppercase tracking-wider bg-clip-text text-transparent bg-gradient-to-r ${colorClass}`}>
             {status}
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground z-10 px-2 sm:px-4 pt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground px-4">
             {message}
           </p>
         </motion.div>
@@ -131,17 +188,17 @@ function DashboardContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="col-span-1 lg:col-span-2 glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] shadow-xl relative overflow-hidden flex flex-col"
+          className="col-span-1 lg:col-span-2 glass-mobile p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl relative overflow-hidden flex flex-col"
         >
-           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
-             <h2 className="text-base sm:text-lg md:text-xl font-bold text-foreground/80 uppercase tracking-widest flex items-center gap-2">
-               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> Weekly Mood Trend
+           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
+             <h2 className="text-sm sm:text-base font-bold text-foreground/80 uppercase tracking-widest flex items-center gap-2">
+               <TrendingUp className="w-4 h-4" /> Weekly Mood Trend
              </h2>
-             <span className="text-xs font-semibold bg-primary/10 text-primary px-2 sm:px-3 py-1 rounded-full self-start sm:self-auto">Last 7 Days</span>
+             <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full self-start">Last 7 Days</span>
            </div>
 
-           <div className="flex-1 w-full min-h-[200px] sm:min-h-[250px] relative z-10">
-             <MoodChart data={weeklyData} type="area" height={window?.innerWidth < 640 ? 200 : 250} />
+           <div className="flex-1 w-full min-h-[200px] sm:min-h-[280px]">
+             <MoodChart data={weeklyData} type="area" height={typeof window !== 'undefined' && window.innerWidth < 640 ? 200 : 280} />
            </div>
         </motion.div>
       </div>
@@ -151,27 +208,29 @@ function DashboardContent() {
          initial={{ opacity: 0, y: 20 }}
          animate={{ opacity: 1, y: 0 }}
          transition={{ duration: 0.5, delay: 0.2 }}
-         className="mt-6 sm:mt-8"
+         className="mt-4"
       >
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-            <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-primary" /> Recommended for You
+            <Activity className="w-5 h-5 text-primary" /> Recommended for You
           </h2>
           <a 
             href="/history" 
-            className="text-sm font-medium text-primary hover:underline"
+            className="text-xs sm:text-sm font-medium text-primary hover:underline"
           >
-            View Full History →
+            View History →
           </a>
         </div>
         
         {recommendations.length > 0 ? (
-          <div className="glass-mobile responsive-padding rounded-2xl sm:rounded-3xl mb-6">
-            <h3 className="text-base sm:text-lg font-bold mb-4 text-primary">AI-Powered Recommendations</h3>
-            <ul className="space-y-2">
+          <div className="glass-mobile p-6 rounded-2xl mb-6">
+            <h3 className="text-base sm:text-lg font-bold mb-4 text-primary flex items-center gap-2">
+              <Brain className="w-5 h-5" /> AI-Powered Recommendations
+            </h3>
+            <ul className="space-y-3">
               {recommendations.map((rec, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm sm:text-base text-foreground">
-                  <span className="text-primary mt-1">•</span>
+                <li key={idx} className="flex items-start gap-3 text-sm sm:text-base text-foreground">
+                  <span className="text-primary text-lg">✓</span>
                   <span>{rec}</span>
                 </li>
               ))}
@@ -179,30 +238,115 @@ function DashboardContent() {
           </div>
         ) : null}
         
-        <div className="responsive-grid gap-4 sm:gap-6">
-          <div className="glass-mobile responsive-padding rounded-2xl sm:rounded-3xl hover:-translate-y-1 transition-transform cursor-pointer group touch-target">
-             <div className="bg-blue-100 text-blue-600 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-               <HeartPulse className="w-5 h-5 sm:w-6 sm:h-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <a href="/breathing" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
+             <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+               <HeartPulse className="w-6 h-6" />
              </div>
-             <h3 className="text-base sm:text-lg font-bold">Guided Breathing</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground mt-2">Take a 3-minute breather to lower anxiety and center your mind.</p>
-          </div>
-          <div className="glass-mobile responsive-padding rounded-2xl sm:rounded-3xl hover:-translate-y-1 transition-transform cursor-pointer group touch-target">
-             <div className="bg-purple-100 text-purple-600 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-               <Brain className="w-5 h-5 sm:w-6 sm:h-6" />
+             <h3 className="text-base sm:text-lg font-bold mb-2">Guided Breathing</h3>
+             <p className="text-xs sm:text-sm text-muted-foreground">Take a 3-minute breather to lower anxiety and center your mind.</p>
+          </a>
+          <a href="/chat" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
+             <div className="bg-purple-100 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+               <Brain className="w-6 h-6" />
              </div>
-             <h3 className="text-base sm:text-lg font-bold">AI Companion</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground mt-2">Chat out your feelings in a safe, judgment-free space.</p>
-          </div>
-          <div className="glass-mobile responsive-padding rounded-2xl sm:rounded-3xl hover:-translate-y-1 transition-transform cursor-pointer group touch-target">
-             <div className="bg-orange-100 text-orange-600 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
-               <List className="w-5 h-5 sm:w-6 sm:h-6" />
+             <h3 className="text-base sm:text-lg font-bold mb-2">AI Companion</h3>
+             <p className="text-xs sm:text-sm text-muted-foreground">Chat out your feelings in a safe, judgment-free space.</p>
+          </a>
+          <a href="/mood" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
+             <div className="bg-orange-100 text-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+               <List className="w-6 h-6" />
              </div>
-             <h3 className="text-base sm:text-lg font-bold">Daily Check-In</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground mt-2">Log your current mood to keep your weekly tracking accurate.</p>
-          </div>
+             <h3 className="text-base sm:text-lg font-bold mb-2">Daily Check-In</h3>
+             <p className="text-xs sm:text-sm text-muted-foreground">Log your current mood to keep your weekly tracking accurate.</p>
+          </a>
         </div>
       </motion.div>
+
+      {/* Conversations Section */}
+      {conversations.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-primary" /> Your Conversations
+            </h2>
+            <button
+              onClick={() => setShowConversations(!showConversations)}
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              {showConversations ? 'Hide' : 'Show'} ({conversations.length})
+            </button>
+          </div>
+
+          {showConversations && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-sm text-muted-foreground">
+                  <Shield className="w-4 h-4 inline mr-1" />
+                  All conversations are encrypted and auto-deleted after 90 days
+                </p>
+                {conversations.length > 0 && (
+                  <button
+                    onClick={handleDeleteAllConversations}
+                    className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Delete All
+                  </button>
+                )}
+              </div>
+
+              {conversations.map((conv, idx) => (
+                <motion.div
+                  key={conv._id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="glass-mobile p-4 rounded-2xl"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(conv.createdAt).toLocaleDateString()} at {new Date(conv.createdAt).toLocaleTimeString()}
+                      </p>
+                      <p className="text-sm font-medium mt-1">
+                        {conv.messages.length} messages
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteConversation(conv.sessionId)}
+                      className="text-red-600 hover:text-red-700 p-2"
+                      title="Delete conversation"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {conv.messages.slice(-3).map((msg: any, msgIdx: number) => (
+                      <div
+                        key={msgIdx}
+                        className={`text-xs p-2 rounded-lg ${
+                          msg.role === 'user'
+                            ? 'bg-primary/10 text-foreground ml-4'
+                            : 'bg-secondary/50 text-foreground mr-4'
+                        }`}
+                      >
+                        <span className="font-semibold">{msg.role === 'user' ? 'You' : 'AI'}:</span>{' '}
+                        {msg.content.substring(0, 100)}{msg.content.length > 100 ? '...' : ''}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }
