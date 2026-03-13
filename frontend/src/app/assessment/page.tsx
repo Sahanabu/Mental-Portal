@@ -8,13 +8,6 @@ import { AssessmentCard } from '@/components/AssessmentCard';
 import { assessmentAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const options = [
-  { value: 0, label: "Not at all" },
-  { value: 1, label: "Several days" },
-  { value: 2, label: "More than half the days" },
-  { value: 3, label: "Nearly every day" },
-];
-
 interface Question {
   id: number;
   question: string;
@@ -30,50 +23,36 @@ export default function AssessmentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const [useFallback, setUseFallback] = useState(false);
-
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
-    const loadQuestions = async () => {
-      const cached = localStorage.getItem('assessmentQuestions');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        setQuestions(parsed);
-        setSessionQuestions(parsed);
-        setIsLoadingQuestions(false);
-        return;
-      }
+    if (!t?.assessment?.questions) return;
 
-      try {
-        const response = await assessmentAPI.generateQuestions();
-        if (response.data.questions && response.data.questions.length > 0) {
-          setQuestions(response.data.questions);
-          setSessionQuestions(response.data.questions);
-          localStorage.setItem('assessmentQuestions', JSON.stringify(response.data.questions));
-        } else {
-          setUseFallback(true);
-        }
-      } catch (error: any) {
-        console.log('Dynamic questions failed, using fallback:', error.message);
-        setUseFallback(true);
-      } finally {
-        setIsLoadingQuestions(false);
-      }
-    };
+    const translatedQuestions = (t.assessment.questions || []).map((q: string, i: number) => ({
+      id: i + 1,
+      question: q,
+      category: t?.assessment?.step || 'Step'
+    }));
+    
+    setSessionQuestions(translatedQuestions);
+    setUseFallback(true);
+    setIsLoadingQuestions(false);
+  }, [language, t]);
 
-    loadQuestions();
-  }, []);
-
-  const fallbackQuestions: Question[] = [
-    { id: 1, question: "Over the last 2 weeks, how often have you felt nervous, anxious, or on edge?", category: "Anxiety" },
-    { id: 2, question: "How often have you not been able to stop or control worrying?", category: "Worry" },
-    { id: 3, question: "How often have you felt down, depressed, or hopeless?", category: "Mood" },
-    { id: 4, question: "How often have you felt tired or had little energy?", category: "Energy" },
-    { id: 5, question: "How often have you had little interest in doing things?", category: "Interest" },
-    { id: 6, question: "Over the last 2 weeks, how often have you had trouble sleeping?", category: "Sleep" }
+  const options = [
+    { value: 0, label: t?.assessment?.options?.[0] || "Not at all" },
+    { value: 1, label: t?.assessment?.options?.[1] || "Several days" },
+    { value: 2, label: t?.assessment?.options?.[2] || "More than half the days" },
+    { value: 3, label: t?.assessment?.options?.[3] || "Nearly every day" },
   ];
 
-  const currentQuestions = useFallback ? fallbackQuestions : sessionQuestions;
+  const fallbackQuestions: Question[] = (t?.assessment?.questions || []).map((q: string, i: number) => ({
+    id: i + 1,
+    question: q,
+    category: t?.assessment?.step || 'Step'
+  }));
+
+  const currentQuestions = sessionQuestions;
   const currentQ = currentQuestions[currentStep] || { id: currentStep + 1, question: 'Loading...', category: '' };
   const progress = ((currentStep) / currentQuestions.length) * 100;
 
@@ -105,7 +84,7 @@ export default function AssessmentPage() {
     }
   };
 
-  if (isLoadingQuestions) {
+  if (isLoadingQuestions || !t?.assessment?.questions) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -123,7 +102,7 @@ export default function AssessmentPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)] p-4 relative overflow-hidden">
-      {useFallback && (
+      {false && useFallback && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -134,7 +113,6 @@ export default function AssessmentPage() {
         </motion.div>
       )}
       
-      {/* Dynamic Background based on progress */}
       <div 
         className="absolute inset-0 -z-10 transition-colors duration-1000"
         style={{ 

@@ -18,6 +18,11 @@ export function Navbar() {
     setIsAuthenticated(tokenManager.isAuthenticated());
   }, []);
 
+  // Update nav items when language changes
+  useEffect(() => {
+    // Force re-render when translations load
+  }, [t]);
+
   const handleLogout = () => {
     tokenManager.removeToken();
     setIsAuthenticated(false);
@@ -25,6 +30,7 @@ export function Navbar() {
     router.push('/');
   };
 
+  // Define navItems inside component to use latest translations
   const navItems = [
     { href: '/dashboard', label: t?.nav?.dashboard || 'Dashboard' },
     { href: '/assessment', label: t?.nav?.assessment || 'Assessment' },

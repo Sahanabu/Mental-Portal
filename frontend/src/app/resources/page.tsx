@@ -4,11 +4,14 @@ import { Phone, ExternalLink, ShieldAlert, HeartPulse, BookOpen, UserPlus, Spark
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { aiAPI } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const localResources = [
   {
     title: 'National Crisis Lifeline',
+    titleKey: 'nationalCrisis',
     description: 'Free, confidential support for people in distress, 24/7.',
+    descKey: 'nationalCrisisDesc',
     phone: '988',
     link: 'https://988lifeline.org/',
     icon: ShieldAlert,
@@ -16,7 +19,9 @@ const localResources = [
   },
   {
     title: 'Crisis Text Line',
+    titleKey: 'crisisText',
     description: 'Text HOME to connect with a volunteer Crisis Counselor 24/7.',
+    descKey: 'crisisTextDesc',
     phone: 'Text HOME to 741741',
     link: 'https://www.crisistextline.org/',
     icon: Phone,
@@ -24,14 +29,18 @@ const localResources = [
   },
   {
     title: 'Therapist Finder',
+    titleKey: 'therapistFinder',
     description: 'Find a licensed therapist within your local area or online.',
+    descKey: 'therapistFinderDesc',
     link: '#',
     icon: UserPlus,
     urgent: false
   },
   {
     title: 'Mindfulness Library',
+    titleKey: 'mindfulnessLibrary',
     description: 'A curated collection of guided meditations and articles on mental well-being.',
+    descKey: 'mindfulnessLibraryDesc',
     link: '#',
     icon: BookOpen,
     urgent: false
@@ -40,25 +49,26 @@ const localResources = [
 
 export default function ResourcesPage() {
   const [aiRecommendations, setAiRecommendations] = useState<string>('');
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const response = await aiAPI.getResourceRecommendations({ userConcerns: 'general wellness' });
+        const response = await aiAPI.getResourceRecommendations({ userConcerns: 'general wellness', language });
         setAiRecommendations(response.data.recommendations);
       } catch (error) {
-        setAiRecommendations('Explore support groups, mental health apps, and professional counseling for personalized guidance.');
+        setAiRecommendations(t?.resources?.subtitle || 'Explore support groups, mental health apps, and professional counseling for personalized guidance.');
       }
     };
     fetchRecommendations();
-  }, []);
+  }, [language, t]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] p-6 md:p-12 max-w-7xl mx-auto pt-20">
       <header className="mb-16 text-center max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-primary">Support & Resources</h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-primary">{t?.resources?.title || 'Support & Resources'}</h1>
         <p className="text-lg text-muted-foreground">
-          You are not alone. Whether you need immediate help or are just looking for ways to improve your mental well-being, these resources are here for you.
+          {t?.resources?.subtitle || 'You are not alone. Whether you need immediate help or are just looking for ways to improve your mental well-being, these resources are here for you.'}
         </p>
       </header>
 
@@ -70,7 +80,7 @@ export default function ResourcesPage() {
         >
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-primary">AI Recommendations for You</h2>
+            <h2 className="text-lg font-bold text-primary">{t?.resources?.aiRecommendations || 'AI Recommendations for You'}</h2>
           </div>
           <p className="text-sm sm:text-base text-foreground/80">{aiRecommendations}</p>
         </motion.div>
@@ -99,10 +109,10 @@ export default function ResourcesPage() {
                 <div className="flex-1 space-y-4">
                   <div>
                     <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
-                       {resource.title}
-                       {resource.urgent && <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full uppercase tracking-widest shadow-sm">Urgent</span>}
+                       {t?.resources?.[resource.titleKey] || resource.title}
+                       {resource.urgent && <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full uppercase tracking-widest shadow-sm">{t?.resources?.urgent || 'Urgent'}</span>}
                     </h2>
-                    <p className="text-muted-foreground leading-relaxed">{resource.description}</p>
+                    <p className="text-muted-foreground leading-relaxed">{t?.resources?.[resource.descKey] || resource.description}</p>
                   </div>
                   
                   {resource.phone && (
@@ -120,7 +130,7 @@ export default function ResourcesPage() {
                         resource.urgent ? 'text-red-600 hover:text-red-800' : 'text-primary hover:text-primary/70'
                       }`}
                     >
-                      Visit Site <ExternalLink className="w-4 h-4" />
+                      {t?.resources?.visitSite || 'Visit Site'} <ExternalLink className="w-4 h-4" />
                     </a>
                   </div>
                 </div>
@@ -139,9 +149,9 @@ export default function ResourcesPage() {
          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6">
            <HeartPulse className="w-8 h-8" />
          </div>
-         <h2 className="text-3xl font-bold mb-4">Daily Wellness Tip</h2>
+         <h2 className="text-3xl font-bold mb-4">{t?.resources?.dailyWellnessTip || 'Daily Wellness Tip'}</h2>
          <p className="text-lg text-muted-foreground italic">
-           "Taking just 5 minutes a day to practice mindful breathing can lower cortisol levels, reducing stress and anxiety significantly over time."
+           {t?.resources?.wellnessTip || '"Taking just 5 minutes a day to practice mindful breathing can lower cortisol levels, reducing stress and anxiety significantly over time."'}
          </p>
       </motion.div>
     </div>

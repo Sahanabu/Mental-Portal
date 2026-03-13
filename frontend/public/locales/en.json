@@ -91,7 +91,13 @@
     "logMood": "Log Mood",
     "moodLogged": "Mood logged successfully!",
     "selectMood": "Select your current mood",
-    "thankYou": "Thank you for checking in!"
+    "thankYou": "Thank you for checking in!",
+    "howFeeling": "How are you feeling?",
+    "logCurrentMood": "Log your current mood to track your emotional well-being over time.",
+    "logging": "Logging...",
+    "moodLoggedSuccess": "Mood Logged!",
+    "trackingStep": "Thank you for checking in. Tracking your feelings is a great step towards mindfulness.",
+    "aiInsight": "AI Insight"
   },
   "chat": {
     "title": "AI Companion",
@@ -145,5 +151,61 @@
     "edit": "Edit",
     "save": "Save",
     "close": "Close"
+  },
+  "history": {
+    "title": "Assessment History",
+    "subtitle": "Track your mental wellness journey over time",
+    "noAssessments": "No Assessments Yet",
+    "noAssessmentsDesc": "Complete your first assessment to start tracking your wellness journey",
+    "takeAssessment": "Take Assessment",
+    "score": "Score",
+    "aiProgressAnalysis": "AI Progress Analysis",
+    "progressOverview": "Progress Overview",
+    "totalAssessments": "Total Assessments",
+    "latestScore": "Latest Score",
+    "averageScore": "Average Score",
+    "currentStatus": "Current Status",
+    "loadingHistory": "Loading your assessment history..."
+  },
+  "breathe": {
+    "title": "Guided Breathing",
+    "subtitle": "Breathing exercise to calm and center",
+    "inhale": "Inhale",
+    "hold": "Hold",
+    "exhale": "Exhale",
+    "start": "Start",
+    "stop": "Stop",
+    "rounds": "Rounds",
+    "breatheIn": "Breathe In",
+    "breatheOut": "Breathe Out",
+    "relax": "Relax"
+  },
+  "ambient": {
+    "title": "Ambient Mode",
+    "subtitle": "Immerse in calming soundscapes",
+    "immerse": "Immerse yourself in calming soundscapes to focus, relax, or sleep.",
+    "gentleRain": "Gentle Rain",
+    "oceanWaves": "Ocean Waves",
+    "campfire": "Campfire",
+    "cosmicAmbient": "Cosmic Ambient",
+    "nowPlaying": "Now Playing",
+    "ambientMode": "Ambient Mode"
+  },
+  "resources": {
+    "title": "Support & Resources",
+    "subtitle": "You are not alone. Whether you need immediate help or are just looking for ways to improve your mental well-being, these resources are here for you.",
+    "aiRecommendations": "AI Recommendations for You",
+    "nationalCrisis": "National Crisis Lifeline",
+    "nationalCrisisDesc": "Free, confidential support for people in distress, 24/7.",
+    "crisisText": "Crisis Text Line",
+    "crisisTextDesc": "Text HOME to connect with a volunteer Crisis Counselor 24/7.",
+    "therapistFinder": "Therapist Finder",
+    "therapistFinderDesc": "Find a licensed therapist within your local area or online.",
+    "mindfulnessLibrary": "Mindfulness Library",
+    "mindfulnessLibraryDesc": "A curated collection of guided meditations and articles on mental well-being.",
+    "urgent": "Urgent",
+    "visitSite": "Visit Site",
+    "dailyWellnessTip": "Daily Wellness Tip",
+    "wellnessTip": "Taking just 5 minutes a day to practice mindful breathing can lower cortisol levels, reducing stress and anxiety significantly over time."
   }
 }

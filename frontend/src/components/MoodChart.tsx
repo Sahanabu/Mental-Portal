@@ -9,9 +9,11 @@ import {
   Tooltip,
   ResponsiveContainer,
   LineChart,
-  Line
+  Line,
+  Legend
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MoodData {
   name: string;
@@ -26,16 +28,48 @@ interface MoodChartProps {
   className?: string;
 }
 
+const moodLabels: Record<number, { en: string; hi: string; kn: string }> = {
+  1: { en: 'Very Low', hi: 'बहुत कम', kn: 'ತುಂಬಾ ಕಡಿಮೆ' },
+  2: { en: 'Low', hi: 'कम', kn: 'ಕಡಿಮೆ' },
+  3: { en: 'Below Average', hi: 'औसत से नीचे', kn: 'ಸರಾಸರಿಗಿಂತ ಕಡಿಮೆ' },
+  4: { en: 'Average', hi: 'औसत', kn: 'ಸರಾಸರಿ' },
+  5: { en: 'Good', hi: 'अच्छा', kn: 'ಒಳ್ಳೆಯದು' },
+  6: { en: 'Very Good', hi: 'बहुत अच्छा', kn: 'ತುಂಬಾ ಒಳ್ಳೆಯದು' },
+  7: { en: 'Excellent', hi: 'उत्कृष्ट', kn: 'ಅತ್ಯುತ್ತಮ' },
+  8: { en: 'Outstanding', hi: 'शानदार', kn: 'ಅದ್ಭುತ' },
+  9: { en: 'Exceptional', hi: 'असाधारण', kn: 'ಅಸಾಧಾರಣ' },
+  10: { en: 'Perfect', hi: 'परफेक्ट', kn: 'ಪರಿಪೂರ್ಣ' }
+};
+
 export function MoodChart({ 
   data, 
   type = 'area', 
   height = 250, 
   className 
 }: MoodChartProps) {
+  const { language } = useLanguage();
   const ChartComponent = type === 'area' ? AreaChart : LineChart;
-  
-  // Responsive height based on screen size
   const responsiveHeight = typeof window !== 'undefined' && window.innerWidth < 640 ? 200 : height;
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const moodValue = payload[0].value;
+      const moodLabel = moodLabels[moodValue]?.[language as 'en' | 'hi' | 'kn'] || moodLabels[moodValue]?.en || 'Unknown';
+      
+      return (
+        <div className="bg-card border border-border rounded-2xl p-3 shadow-lg">
+          <p className="text-sm font-semibold text-foreground">{payload[0].payload.name}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {language === 'hi' ? 'मूड' : language === 'kn' ? 'ಮನಸ್ಥಿತಿ' : 'Mood'}: <span className="font-bold text-primary">{moodValue}/10</span>
+          </p>
+          <p className="text-xs text-primary font-medium mt-1">{moodLabel}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const legendLabel = language === 'hi' ? 'मूड स्कोर' : language === 'kn' ? 'ಮನಸ್ಥಿತಿ ಅಂಕ' : 'Mood Score';
 
   return (
     <div className={cn("w-full", className)} style={{ height: responsiveHeight }}>
@@ -46,7 +80,7 @@ export function MoodChart({
             top: 10, 
             right: 10, 
             left: typeof window !== 'undefined' && window.innerWidth < 640 ? -30 : -20, 
-            bottom: 0 
+            bottom: 5 
           }}
         >
           <defs>
@@ -71,6 +105,8 @@ export function MoodChart({
             dy={10} 
           />
           <YAxis 
+            domain={[0, 10]}
+            ticks={[0, 2, 4, 6, 8, 10]}
             axisLine={false} 
             tickLine={false} 
             tick={{
@@ -78,16 +114,16 @@ export function MoodChart({
               fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? 10 : 12
             }} 
           />
-          <Tooltip 
-            contentStyle={{ 
-              borderRadius: '16px', 
-              border: 'none', 
-              background: 'hsl(var(--card))', 
-              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
-            }} 
-            itemStyle={{ 
-              color: 'hsl(var(--foreground))', 
-              fontWeight: 'bold' 
+          <Tooltip content={<CustomTooltip />} />
+          <Legend 
+            verticalAlign="top" 
+            height={36}
+            iconType="line"
+            formatter={() => legendLabel}
+            wrapperStyle={{
+              fontSize: typeof window !== 'undefined' && window.innerWidth < 640 ? '11px' : '13px',
+              fontWeight: 600,
+              color: 'hsl(var(--foreground))'
             }}
           />
           {type === 'area' ? (
@@ -98,6 +134,7 @@ export function MoodChart({
               strokeWidth={3} 
               fillOpacity={1} 
               fill="url(#colorMood)" 
+              name={legendLabel}
             />
           ) : (
             <Line 
@@ -107,6 +144,7 @@ export function MoodChart({
               strokeWidth={3}
               dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
+              name={legendLabel}
             />
           )}
         </ChartComponent>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Volume2, CloudRain, Waves, Flame, Sparkles } from 'lucide-react';
 import { aiAPI } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const soundscapes = [
   { id: 'rain', name: 'Gentle Rain', icon: CloudRain, color: 'from-blue-900 to-slate-900' },
@@ -17,20 +18,21 @@ export default function AmbientPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(50);
   const [aiGuidance, setAiGuidance] = useState<string>('');
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchGuidance = async () => {
       try {
         const hour = new Date().getHours();
         const timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-        const response = await aiAPI.getAmbientGuidance({ timeOfDay, mood: 'calm' });
+        const response = await aiAPI.getAmbientGuidance({ timeOfDay, mood: 'calm', language });
         setAiGuidance(response.data.guidance);
       } catch (error) {
-        setAiGuidance('Take this moment for yourself. Let the sounds wash over you and bring peace to your mind.');
+        setAiGuidance(t?.ambient?.immerse || 'Take this moment for yourself. Let the sounds wash over you and bring peace to your mind.');
       }
     };
     fetchGuidance();
-  }, []);
+  }, [language, t]);
 
   const activeTheme = soundscapes.find(s => s.id === activeSound)?.color || soundscapes[0].color;
 
@@ -56,8 +58,8 @@ export default function AmbientPage() {
           className="glass p-12 rounded-[3.5rem] bg-black/20 border-white/10 backdrop-blur-3xl text-white max-w-2xl w-full"
         >
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight drop-shadow-md">Ambient Mode</h1>
-            <p className="text-lg text-white/70">Immerse yourself in calming soundscapes to focus, relax, or sleep.</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight drop-shadow-md">{t?.ambient?.ambientMode || 'Ambient Mode'}</h1>
+            <p className="text-lg text-white/70">{t?.ambient?.immerse || 'Immerse yourself in calming soundscapes to focus, relax, or sleep.'}</p>
             {aiGuidance && (
               <motion.p 
                 initial={{ opacity: 0 }}
@@ -102,7 +104,7 @@ export default function AmbientPage() {
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-semibold tracking-wider uppercase text-white/70">
-                    Now Playing
+                    {t?.ambient?.nowPlaying || 'Now Playing'}
                   </span>
                   {isPlaying && (
                      <div className="flex gap-1 h-3 items-center">

@@ -5,25 +5,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BreathingAnimation } from '@/components/BreathingAnimation';
 import { aiAPI } from '@/services/api';
 import { Sparkles } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function BreathePage() {
   const [isActive, setIsActive] = useState(false);
   const [aiTips, setAiTips] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchTips = async () => {
       try {
-        const response = await aiAPI.getBreathingTips({ currentMood: 'neutral', stressLevel: 'moderate' });
+        const response = await aiAPI.getBreathingTips({ currentMood: 'neutral', stressLevel: 'moderate', language });
         setAiTips(response.data.tips);
       } catch (error) {
-        setAiTips('Focus on slow, deep breaths. Let each exhale release tension from your body.');
+        setAiTips(t?.breathe?.relax || 'Focus on slow, deep breaths. Let each exhale release tension from your body.');
       } finally {
         setLoading(false);
       }
     };
     fetchTips();
-  }, []);
+  }, [language, t]);
 
   const toggleBreathing = () => {
     setIsActive(!isActive);
@@ -44,7 +46,7 @@ export default function BreathePage() {
 
       <div className="relative z-10 flex flex-col items-center max-w-2xl">
         <h1 className={`text-3xl sm:text-4xl md:text-5xl font-extrabold mb-8 sm:mb-16 transition-colors duration-1000 text-center ${isActive ? 'text-white' : 'text-foreground'}`}>
-          Guided Breathing
+          {t?.breathe?.title || 'Guided Breathing'}
         </h1>
 
         <BreathingAnimation 
@@ -53,7 +55,9 @@ export default function BreathePage() {
         />
 
         <p className={`mt-8 sm:mt-16 text-base sm:text-lg max-w-md text-center transition-colors duration-1000 ${isActive ? 'text-white/80' : 'text-muted-foreground'}`}>
-          {isActive ? 'Follow the circle. Breathe in for 4s, hold for 4s, and exhale for 6s.' : 'Tap the circle to begin a 4-4-6 breathing exercise to calm your nervous system.'}
+          {isActive 
+            ? (t?.breathe?.subtitle || 'Follow the circle. Breathe in for 4s, hold for 4s, and exhale for 6s.') 
+            : (t?.breathe?.subtitle || 'Tap the circle to begin a 4-4-6 breathing exercise to calm your nervous system.')}
         </p>
 
         {!isActive && !loading && aiTips && (
@@ -64,7 +68,7 @@ export default function BreathePage() {
           >
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-5 h-5 text-primary" />
-              <h3 className="text-sm font-bold text-primary">AI Tips for You</h3>
+              <h3 className="text-sm font-bold text-primary">{t?.mood?.aiInsight || 'AI Tips for You'}</h3>
             </div>
             <p className="text-sm text-foreground/80">{aiTips}</p>
           </motion.div>

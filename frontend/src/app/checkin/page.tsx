@@ -6,6 +6,7 @@ import { CheckCircle2, Sparkles } from 'lucide-react';
 import { MoodCard } from '@/components/MoodCard';
 import { useMood } from '@/hooks/useMood';
 import { aiAPI } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const moods = [
   { id: 'happy', emoji: '😊', label: 'Happy', color: 'from-green-400 to-emerald-500', shadow: 'shadow-green-500/30' },
@@ -19,6 +20,7 @@ export default function CheckinPage() {
   const [isLogged, setIsLogged] = useState(false);
   const [aiInsight, setAiInsight] = useState<string>('');
   const { logMood, isLoading, fetchMoodHistory, moodHistory } = useMood();
+  const { t, language } = useLanguage();
 
   const handleLog = async () => {
     if (!selectedMood) return;
@@ -31,10 +33,10 @@ export default function CheckinPage() {
       // Get AI insight
       try {
         const recentMoods = moodHistory.slice(-7).map(m => m.mood);
-        const response = await aiAPI.getCheckinInsights({ mood: selectedMood, recentMoods });
+        const response = await aiAPI.getCheckinInsights({ mood: selectedMood, recentMoods, language });
         setAiInsight(response.data.insight);
       } catch (error) {
-        setAiInsight('Thank you for checking in. Regular mood tracking helps you understand your patterns.');
+        setAiInsight(t?.mood?.trackingStep || 'Thank you for checking in. Regular mood tracking helps you understand your patterns.');
       }
     }
   };
@@ -50,14 +52,14 @@ export default function CheckinPage() {
       >
         {!isLogged ? (
           <>
-             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground mb-3 sm:mb-4">How are you feeling?</h1>
-             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 sm:mb-10 md:mb-12">Log your current mood to track your emotional well-being over time.</p>
+             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground mb-3 sm:mb-4">{t?.mood?.howFeeling || 'How are you feeling?'}</h1>
+             <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 sm:mb-10 md:mb-12">{t?.mood?.logCurrentMood || 'Log your current mood to track your emotional well-being over time.'}</p>
 
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10 md:mb-12">
                {moods.map((mood) => (
                   <MoodCard
                     key={mood.id}
-                    mood={mood.label}
+                    mood={t?.mood?.[mood.id] || mood.label}
                     emoji={mood.emoji}
                     color={mood.color}
                     shadow={mood.shadow}
@@ -73,7 +75,7 @@ export default function CheckinPage() {
                 disabled={!selectedMood || isLoading}
                 className="w-full max-w-xs mx-auto touch-button bg-foreground text-background rounded-full text-lg sm:text-xl font-bold disabled:opacity-30 disabled:hover:scale-100 hover:scale-105 transition-all shadow-xl"
              >
-               {isLoading ? 'Logging...' : 'Log Mood'}
+               {isLoading ? (t?.mood?.logging || 'Logging...') : (t?.mood?.logMood || 'Log Mood')}
              </button>
           </>
         ) : (
@@ -85,8 +87,8 @@ export default function CheckinPage() {
              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-xl shadow-green-200">
                <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
              </div>
-             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Mood Logged!</h2>
-             <p className="text-muted-foreground text-base sm:text-lg mb-6">Thank you for checking in. Tracking your feelings is a great step towards mindfulness.</p>
+             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{t?.mood?.moodLoggedSuccess || 'Mood Logged!'}</h2>
+             <p className="text-muted-foreground text-base sm:text-lg mb-6">{t?.mood?.trackingStep || 'Thank you for checking in. Tracking your feelings is a great step towards mindfulness.'}</p>
              
              {aiInsight && (
                <motion.div
@@ -97,7 +99,7 @@ export default function CheckinPage() {
                >
                  <div className="flex items-center gap-2 mb-2">
                    <Sparkles className="w-4 h-4 text-primary" />
-                   <span className="text-sm font-bold text-primary">AI Insight</span>
+                   <span className="text-sm font-bold text-primary">{t?.mood?.aiInsight || 'AI Insight'}</span>
                  </div>
                  <p className="text-sm text-foreground/80 text-left">{aiInsight}</p>
                </motion.div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, TrendingUp, Activity, Sparkles } from 'lucide-react';
 import { assessmentAPI, moodAPI, aiAPI } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Assessment {
   id: string;
@@ -17,6 +18,7 @@ export default function HistoryPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -37,11 +39,12 @@ export default function HistoryPage() {
             const moodResponse = await moodAPI.getHistory();
             const analysis = await aiAPI.getHistoryAnalysis({
               assessments: formattedData,
-              moodLogs: moodResponse.data.moodLogs || []
+              moodLogs: moodResponse.data.moodLogs || [],
+              language
             });
             setAiAnalysis(analysis.data.analysis);
           } catch (error) {
-            setAiAnalysis('Your consistent tracking shows dedication to your mental wellness journey.');
+            setAiAnalysis(t?.history?.progressOverview || 'Your consistent tracking shows dedication to your mental wellness journey.');
           }
         }
       } catch (error) {
@@ -70,7 +73,7 @@ export default function HistoryPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your assessment history...</p>
+          <p className="text-muted-foreground">{t?.history?.loadingHistory || 'Loading your assessment history...'}</p>
         </div>
       </div>
     );
@@ -80,10 +83,10 @@ export default function HistoryPage() {
     <div className="min-h-screen p-4 sm:p-6 md:p-8 lg:p-12 max-w-7xl mx-auto pt-20">
       <header className="mb-8">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
-          Assessment History
+          {t?.history?.title || 'Assessment History'}
         </h1>
         <p className="text-muted-foreground text-base sm:text-lg">
-          Track your mental wellness journey over time
+          {t?.history?.subtitle || 'Track your mental wellness journey over time'}
         </p>
       </header>
 
@@ -94,15 +97,15 @@ export default function HistoryPage() {
           className="glass-mobile responsive-padding rounded-3xl text-center py-12"
         >
           <Activity className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-bold mb-2">No Assessments Yet</h2>
+          <h2 className="text-xl font-bold mb-2">{t?.history?.noAssessments || 'No Assessments Yet'}</h2>
           <p className="text-muted-foreground mb-6">
-            Complete your first assessment to start tracking your wellness journey
+            {t?.history?.noAssessmentsDesc || 'Complete your first assessment to start tracking your wellness journey'}
           </p>
           <a
             href="/assessment"
             className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-full font-bold hover:scale-105 transition-transform"
           >
-            Take Assessment
+            {t?.history?.takeAssessment || 'Take Assessment'}
           </a>
         </motion.div>
       ) : (
@@ -132,7 +135,7 @@ export default function HistoryPage() {
                         <span>{assessment.date}</span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
-                        Score: {assessment.score} / 27
+                        {t?.history?.score || 'Score'}: {assessment.score} / 27
                       </p>
                     </div>
                   </div>
@@ -164,7 +167,7 @@ export default function HistoryPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-5 h-5 text-primary" />
-                    <h2 className="text-lg font-bold text-primary">AI Progress Analysis</h2>
+                    <h2 className="text-lg font-bold text-primary">{t?.history?.aiProgressAnalysis || 'AI Progress Analysis'}</h2>
                   </div>
                   <p className="text-sm sm:text-base text-foreground/80">{aiAnalysis}</p>
                 </motion.div>
@@ -178,30 +181,30 @@ export default function HistoryPage() {
               >
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-6 h-6 text-primary" />
-                <h2 className="text-xl font-bold">Progress Overview</h2>
+                <h2 className="text-xl font-bold">{t?.history?.progressOverview || 'Progress Overview'}</h2>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-primary">{assessments.length}</p>
-                  <p className="text-sm text-muted-foreground">Total Assessments</p>
+                  <p className="text-sm text-muted-foreground">{t?.history?.totalAssessments || 'Total Assessments'}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-primary">
                     {assessments[0]?.score || 0}
                   </p>
-                  <p className="text-sm text-muted-foreground">Latest Score</p>
+                  <p className="text-sm text-muted-foreground">{t?.history?.latestScore || 'Latest Score'}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-primary">
                     {Math.round(assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length)}
                   </p>
-                  <p className="text-sm text-muted-foreground">Average Score</p>
+                  <p className="text-sm text-muted-foreground">{t?.history?.averageScore || 'Average Score'}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-primary">
                     {assessments[0]?.category || 'N/A'}
                   </p>
-                  <p className="text-sm text-muted-foreground">Current Status</p>
+                  <p className="text-sm text-muted-foreground">{t?.history?.currentStatus || 'Current Status'}</p>
                 </div>
               </div>
             </motion.div>
