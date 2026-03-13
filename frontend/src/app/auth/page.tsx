@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowRight, UserCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { authAPI, tokenManager } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function AuthPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ name: '', username: '', password: '' });
   const [error, setError] = useState('');
@@ -63,7 +65,7 @@ export default function AuthPage() {
             <UserCircle className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
+            {isLogin ? (t?.auth?.login || 'Welcome Back') : (t?.auth?.register || 'Create Account')}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-2 sm:mt-3 font-medium">
             Take the next step in your mental wellness journey.
@@ -121,7 +123,7 @@ export default function AuthPage() {
             disabled={isLoading}
             className="w-full touch-button mt-4 bg-primary text-primary-foreground rounded-full text-base sm:text-lg font-bold hover:shadow-lg hover:shadow-primary/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')} 
+            {isLoading ? 'Processing...' : (isLogin ? (t?.auth?.login || 'Sign In') : (t?.auth?.register || 'Sign Up'))} 
             {!isLoading && <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
         </form>
@@ -145,7 +147,7 @@ export default function AuthPage() {
 
           <Link href="/assessment">
             <button className="w-full touch-button bg-secondary/80 text-secondary-foreground rounded-full text-sm sm:text-base font-semibold hover:bg-secondary transition-colors border border-border/30">
-              Continue Anonymously
+              {t?.auth?.anonymousMode || 'Continue Anonymously'}
             </button>
           </Link>
         </div>

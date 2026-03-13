@@ -2,14 +2,22 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const getAIResponse = async (prompt) => {
+const getAIResponse = async (prompt, language = 'en') => {
   if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
     return null;
   }
 
   try {
+    const languageInstructions = {
+      'en': 'Respond in English.',
+      'hi': 'आपको हिंदी में जवाब देना है। सरल और स्पष्ट हिंदी का उपयोग करें। (You must respond in Hindi. Use simple and clear Hindi.)',
+      'kn': 'ನೀವು ಕನ್ನಡದಲ್ಲಿ ಉತ್ತರಿಸಬೇಕು. ಸರಳ ಮತ್ತು ಸ್ಪಷ್ಟವಾದ ಕನ್ನಡವನ್ನು ಬಳಸಿ. (You must respond in Kannada. Use simple and clear Kannada.)'
+    };
+    const langInstruction = languageInstructions[language] || languageInstructions['en'];
+    const fullPrompt = `${prompt}\n\nIMPORTANT: ${langInstruction}`;
+    
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     return response.text();
   } catch (error) {
@@ -20,13 +28,13 @@ const getAIResponse = async (prompt) => {
 
 exports.getBreathingTips = async (req, res) => {
   try {
-    const { currentMood, stressLevel } = req.body;
+    const { currentMood, stressLevel, language = 'en' } = req.body;
 
     const prompt = `You are a mindfulness and breathing expert. The user is about to do a breathing exercise. Their current mood is "${currentMood || 'neutral'}" and stress level is ${stressLevel || 'moderate'}.
 
 Provide 3 short, personalized tips for their breathing session (max 100 words total). Be encouraging and specific to their state.`;
 
-    const aiMessage = await getAIResponse(prompt);
+    const aiMessage = await getAIResponse(prompt, language);
 
     res.json({
       tips: aiMessage || "Focus on slow, deep breaths. Inhale for 4 counts, hold for 4, exhale for 6. Let your shoulders relax with each breath."
@@ -41,13 +49,13 @@ Provide 3 short, personalized tips for their breathing session (max 100 words to
 
 exports.getAmbientGuidance = async (req, res) => {
   try {
-    const { timeOfDay, mood } = req.body;
+    const { timeOfDay, mood, language = 'en' } = req.body;
 
     const prompt = `You are a relaxation and ambient wellness guide. It's ${timeOfDay || 'daytime'} and the user's mood is "${mood || 'neutral'}".
 
 Provide a short, calming message (max 80 words) to help them relax in this ambient space. Be soothing and present-focused.`;
 
-    const aiMessage = await getAIResponse(prompt);
+    const aiMessage = await getAIResponse(prompt, language);
 
     res.json({
       guidance: aiMessage || "Take this moment for yourself. Let the gentle movements calm your mind. There's nowhere you need to be right now. Just breathe and be present."
@@ -62,13 +70,13 @@ Provide a short, calming message (max 80 words) to help them relax in this ambie
 
 exports.getResourceRecommendations = async (req, res) => {
   try {
-    const { userConcerns, assessmentScore } = req.body;
+    const { userConcerns, assessmentScore, language = 'en' } = req.body;
 
     const prompt = `You are a mental health resource advisor. The user has concerns about: "${userConcerns || 'general wellness'}" and their recent assessment score is ${assessmentScore || 'not provided'}.
 
 Recommend 3 specific types of resources or support they should explore (max 120 words). Be practical and supportive.`;
 
-    const aiMessage = await getAIResponse(prompt);
+    const aiMessage = await getAIResponse(prompt, language);
 
     res.json({
       recommendations: aiMessage || "Consider exploring: 1) Local support groups for peer connection, 2) Mental health apps for daily tracking, 3) Professional counseling for personalized guidance. Remember, seeking help is a sign of strength."
@@ -83,13 +91,13 @@ Recommend 3 specific types of resources or support they should explore (max 120 
 
 exports.getCheckinInsights = async (req, res) => {
   try {
-    const { mood, recentMoods } = req.body;
+    const { mood, recentMoods, language = 'en' } = req.body;
 
     const prompt = `You are a mood tracking wellness coach. The user just logged their mood as "${mood}". Their recent mood pattern is: ${recentMoods?.join(', ') || 'not available'}.
 
 Provide a brief, encouraging insight about their mood pattern (max 80 words). Be supportive and offer one actionable tip.`;
 
-    const aiMessage = await getAIResponse(prompt);
+    const aiMessage = await getAIResponse(prompt, language);
 
     res.json({
       insight: aiMessage || "Thank you for checking in. Tracking your mood helps you understand patterns. If you're feeling low, try a short walk or reach out to someone you trust."
@@ -104,7 +112,7 @@ Provide a brief, encouraging insight about their mood pattern (max 80 words). Be
 
 exports.getHistoryAnalysis = async (req, res) => {
   try {
-    const { assessments, moodLogs } = req.body;
+    const { assessments, moodLogs, language = 'en' } = req.body;
 
     const prompt = `You are a wellness progress analyst. The user has ${assessments?.length || 0} assessments and ${moodLogs?.length || 0} mood logs.
 
@@ -113,7 +121,7 @@ Recent moods: ${moodLogs?.slice(-7).map(m => m.mood).join(', ') || 'none'}.
 
 Provide a brief, encouraging analysis of their progress (max 100 words). Highlight positive trends or suggest areas for focus.`;
 
-    const aiMessage = await getAIResponse(prompt);
+    const aiMessage = await getAIResponse(prompt, language);
 
     res.json({
       analysis: aiMessage || "Your journey is unique. Regular tracking shows self-awareness and commitment to your wellbeing. Keep noting patterns and celebrate small improvements."

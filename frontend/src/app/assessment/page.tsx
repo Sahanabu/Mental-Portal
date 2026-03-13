@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2, Brain } from 'lucide-react';
 import { AssessmentCard } from '@/components/AssessmentCard';
 import { assessmentAPI } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const options = [
   { value: 0, label: "Not at all" },
@@ -22,6 +23,7 @@ interface Question {
 
 export default function AssessmentPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -90,7 +92,8 @@ export default function AssessmentPage() {
     try {
       const analysisResponse = await assessmentAPI.analyzeAnswers({
         answers: answersArray,
-        questions: currentQuestions
+        questions: currentQuestions,
+        language
       });
       localStorage.setItem('lastAssessment', JSON.stringify(analysisResponse.data));
       router.push(`/dashboard?score=${analysisResponse.data.score}`);
@@ -111,8 +114,8 @@ export default function AssessmentPage() {
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full mx-auto mb-4"
           />
-          <p>Generating personalized questions...</p>
-          <p className="text-sm text-muted-foreground mt-2">Powered by AI</p>
+          <p>{t?.assessment?.generatingQuestions || 'Generating personalized questions...'}</p>
+          <p className="text-sm text-muted-foreground mt-2">{t?.assessment?.poweredByAI || 'Powered by AI'}</p>
         </div>
       </div>
     );
@@ -127,7 +130,7 @@ export default function AssessmentPage() {
           className="mb-4 p-3 bg-yellow-100/80 border border-yellow-300/50 rounded-xl max-w-sm text-xs text-yellow-800"
         >
           <Brain className="w-4 h-4 inline mr-1" />
-          Using standard questions (AI temporarily unavailable)
+          {t?.assessment?.usingStandard || 'Using standard questions (AI temporarily unavailable)'}
         </motion.div>
       )}
       
@@ -144,8 +147,8 @@ export default function AssessmentPage() {
 
       <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl mb-6 sm:mb-8 space-y-2">
         <div className="flex justify-between text-xs sm:text-sm font-semibold text-muted-foreground">
-          <span>Question {currentStep + 1} of {currentQuestions.length}</span>
-          <span>{Math.round(progress)}% Complete</span>
+          <span>{t?.assessment?.question || 'Question'} {currentStep + 1} {t?.assessment?.of || 'of'} {currentQuestions.length}</span>
+          <span>{Math.round(progress)}% {t?.assessment?.complete || 'Complete'}</span>
         </div>
         <div className="h-2 w-full bg-white/50 rounded-full overflow-hidden border border-white/20">
           <motion.div 
@@ -168,7 +171,7 @@ export default function AssessmentPage() {
         >
           <div className="glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-white/40 backdrop-blur-3xl">
             <span className="inline-block px-3 sm:px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest mb-4 sm:mb-6 flex items-center gap-1">
-              {currentQ.category || `Step ${currentStep + 1}`}
+              {currentQ.category || `${t?.assessment?.step || 'Step'} ${currentStep + 1}`}
               {!useFallback && <Brain className="w-3 h-3" />}
             </span>
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-foreground leading-tight mb-6 sm:mb-8 md:mb-10">
@@ -203,7 +206,7 @@ export default function AssessmentPage() {
                   disabled={answers[currentStep] === undefined || isSubmitting}
                   className="px-6 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full text-base sm:text-lg font-bold disabled:opacity-50 hover:scale-105 transition-all flex items-center gap-2 touch-target"
                 >
-                  {isSubmitting ? 'AI Analyzing...' : 'Get AI Analysis'}
+                  {isSubmitting ? (t?.assessment?.analyzing || 'AI Analyzing...') : (t?.assessment?.getAnalysis || 'Get AI Analysis')}
                   {!isSubmitting && <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
               ) : (

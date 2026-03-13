@@ -4,14 +4,23 @@ import { useState, useEffect } from 'react';
 import { ChatWindow, type Message } from '@/components/ChatWindow';
 import { chatAPI, tokenManager } from '@/services/api';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ChatPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', sender: 'bot', text: 'Hello. I am your mental wellness companion. How are you feeling right now?' }
+    { id: '1', sender: 'bot', text: '' }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Set initial greeting message after translations load
+    if (t?.chat?.greeting) {
+      setMessages([{ id: '1', sender: 'bot', text: t.chat.greeting }]);
+    }
+  }, [t]);
 
   useEffect(() => {
     const token = tokenManager.getToken();
@@ -36,7 +45,7 @@ export default function ChatPage() {
     setIsTyping(true);
 
     try {
-      const response = await chatAPI.sendMessage(messageText);
+      const response = await chatAPI.sendMessage(messageText, undefined, language);
       const botMessage: Message = { 
         id: (Date.now() + 1).toString(), 
         sender: 'bot', 

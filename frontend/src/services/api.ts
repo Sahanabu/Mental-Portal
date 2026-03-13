@@ -16,6 +16,11 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Add language to all requests
+  const language = localStorage.getItem('language') || 'en';
+  if (config.data && typeof config.data === 'object') {
+    config.data.language = language;
+  }
   return config;
 });
 
@@ -33,7 +38,7 @@ export const authAPI = {
 export const assessmentAPI = {
   generateQuestions: () =>
     api.post('/assessment/questions'),
-  analyzeAnswers: (data: { answers: number[]; questions?: any[] }) =>
+  analyzeAnswers: (data: { answers: number[]; questions?: any[]; language?: string }) =>
     api.post('/assessment/analyze', data),
   submit: (data: { answers: number[]; totalScore: number }) =>
     api.post('/assessment/submit', data),
@@ -51,8 +56,8 @@ export const moodAPI = {
 
 // Chat API
 export const chatAPI = {
-  sendMessage: (message: string, sessionId?: string) =>
-    api.post('/chat', { message, sessionId }),
+  sendMessage: (message: string, sessionId?: string, language?: string) =>
+    api.post('/chat', { message, sessionId, language }),
   getConversations: (limit?: number) =>
     api.get('/chat/conversations', { params: { limit } }),
   getConversation: (sessionId: string) =>
@@ -71,15 +76,15 @@ export const resourcesAPI = {
 
 // AI API
 export const aiAPI = {
-  getBreathingTips: (data: { currentMood?: string; stressLevel?: string }) =>
+  getBreathingTips: (data: { currentMood?: string; stressLevel?: string; language?: string }) =>
     api.post('/ai/breathing-tips', data),
-  getAmbientGuidance: (data: { timeOfDay?: string; mood?: string }) =>
+  getAmbientGuidance: (data: { timeOfDay?: string; mood?: string; language?: string }) =>
     api.post('/ai/ambient-guidance', data),
-  getResourceRecommendations: (data: { userConcerns?: string; assessmentScore?: number }) =>
+  getResourceRecommendations: (data: { userConcerns?: string; assessmentScore?: number; language?: string }) =>
     api.post('/ai/resource-recommendations', data),
-  getCheckinInsights: (data: { mood: string; recentMoods?: string[] }) =>
+  getCheckinInsights: (data: { mood: string; recentMoods?: string[]; language?: string }) =>
     api.post('/ai/checkin-insights', data),
-  getHistoryAnalysis: (data: { assessments?: any[]; moodLogs?: any[] }) =>
+  getHistoryAnalysis: (data: { assessments?: any[]; moodLogs?: any[]; language?: string }) =>
     api.post('/ai/history-analysis', data),
 };
 

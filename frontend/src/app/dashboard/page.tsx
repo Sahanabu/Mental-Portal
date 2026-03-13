@@ -7,10 +7,12 @@ import { Activity, Brain, HeartPulse, List, Target, TrendingUp, User, MessageSqu
 import { MoodChart } from '@/components/MoodChart';
 import Link from 'next/link';
 import { moodAPI, chatAPI, authAPI } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
   const rawScore = searchParams.get('score');
+  const { t } = useLanguage();
   const [score, setScore] = useState<number | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
@@ -127,25 +129,25 @@ function DashboardContent() {
     }
   };
 
-  if (score === null || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading dashboard...</div>;
+  if (score === null || isLoading) return <div className="min-h-screen flex items-center justify-center">{t?.dashboard?.loadingDashboard || 'Loading dashboard...'}</div>;
 
   // Derive status
   let status = "Minimal";
   let colorClass = "from-green-400 to-emerald-600";
-  let message = "You're doing great! Keep maintaining your positive habits.";
+  let message = t?.dashboard?.statusMinimal || "You're doing great! Keep maintaining your positive habits.";
   
   if (score > 5 && score <= 9) {
     status = "Mild";
     colorClass = "from-teal-400 to-cyan-500";
-    message = "You are experiencing mild symptoms. Consider light mindfulness exercises.";
+    message = t?.dashboard?.statusMild || "You are experiencing mild symptoms. Consider light mindfulness exercises.";
   } else if (score > 9 && score <= 14) {
     status = "Moderate";
     colorClass = "from-amber-400 to-orange-500";
-    message = "You have moderate symptoms. Taking a break and guided breathing might help.";
+    message = t?.dashboard?.statusModerate || "You have moderate symptoms. Taking a break and guided breathing might help.";
   } else if (score > 14) {
     status = "Severe";
     colorClass = "from-rose-400 to-red-500";
-    message = "You have significant symptoms. Please consider reaching out to a professional.";
+    message = t?.dashboard?.statusSevere || "You have significant symptoms. Please consider reaching out to a professional.";
   }
 
   return (
@@ -167,13 +169,13 @@ function DashboardContent() {
         ) : null}
         <div className="flex items-center gap-2 text-xs text-green-600">
           <Shield className="w-4 h-4" />
-          <span>Encrypted</span>
+          <span>{t?.dashboard?.encrypted || 'Encrypted'}</span>
         </div>
       </motion.div>
 
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">Your Wellness Overview</h1>
-        <p className="text-muted-foreground text-sm sm:text-base">Here is a snapshot of your recent assessment and mood trends.</p>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">{t?.dashboard?.title || 'Your Wellness Overview'}</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">{t?.dashboard?.snapshot || 'Here is a snapshot of your recent assessment and mood trends.'}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -187,7 +189,7 @@ function DashboardContent() {
           <div className="absolute -top-16 -right-16 w-32 h-32 sm:w-48 sm:h-48 bg-primary/20 rounded-full blur-3xl"></div>
           
           <h2 className="text-sm sm:text-base font-bold text-foreground/80 uppercase tracking-widest flex items-center gap-2">
-            <Target className="w-4 h-4" /> Current Status
+            <Target className="w-4 h-4" /> {t?.dashboard?.currentStatus || 'Current Status'}
           </h2>
           <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center bg-gradient-to-tr ${colorClass} shadow-2xl relative`}>
             <div className="w-[85%] h-[85%] bg-background rounded-full flex flex-col items-center justify-center">
@@ -214,9 +216,9 @@ function DashboardContent() {
         >
            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
              <h2 className="text-sm sm:text-base font-bold text-foreground/80 uppercase tracking-widest flex items-center gap-2">
-               <TrendingUp className="w-4 h-4" /> Weekly Mood Trend
+               <TrendingUp className="w-4 h-4" /> {t?.dashboard?.weeklyMoodTrend || 'Weekly Mood Trend'}
              </h2>
-             <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full self-start">Last 7 Days</span>
+             <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full self-start">{t?.dashboard?.last7Days || 'Last 7 Days'}</span>
            </div>
 
            <div className="flex-1 w-full min-h-[200px] sm:min-h-[280px]">
@@ -234,20 +236,20 @@ function DashboardContent() {
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" /> Recommended for You
+            <Activity className="w-5 h-5 text-primary" /> {t?.dashboard?.recommendedForYou || 'Recommended for You'}
           </h2>
           <a 
             href="/history" 
             className="text-xs sm:text-sm font-medium text-primary hover:underline"
           >
-            View History →
+            {t?.dashboard?.viewHistory || 'View History →'}
           </a>
         </div>
         
         {recommendations.length > 0 ? (
           <div className="glass-mobile p-6 rounded-2xl mb-6">
             <h3 className="text-base sm:text-lg font-bold mb-4 text-primary flex items-center gap-2">
-              <Brain className="w-5 h-5" /> AI-Powered Recommendations
+              <Brain className="w-5 h-5" /> {t?.dashboard?.aiPoweredRecommendations || 'AI-Powered Recommendations'}
             </h3>
             <ul className="space-y-3">
               {recommendations.map((rec, idx) => (
@@ -265,22 +267,22 @@ function DashboardContent() {
              <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                <HeartPulse className="w-6 h-6" />
              </div>
-             <h3 className="text-base sm:text-lg font-bold mb-2">Guided Breathing</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground">Take a 3-minute breather to lower anxiety and center your mind.</p>
+             <h3 className="text-base sm:text-lg font-bold mb-2">{t?.dashboard?.guidedBreathing || 'Guided Breathing'}</h3>
+             <p className="text-xs sm:text-sm text-muted-foreground">{t?.dashboard?.guidedBreathingDesc || 'Take a 3-minute breather to lower anxiety and center your mind.'}</p>
           </Link>
           <a href="/chat" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
              <div className="bg-purple-100 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                <Brain className="w-6 h-6" />
              </div>
-             <h3 className="text-base sm:text-lg font-bold mb-2">AI Companion</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground">Chat out your feelings in a safe, judgment-free space.</p>
+             <h3 className="text-base sm:text-lg font-bold mb-2">{t?.dashboard?.aiCompanion || 'AI Companion'}</h3>
+             <p className="text-xs sm:text-sm text-muted-foreground">{t?.dashboard?.aiCompanionDesc || 'Chat out your feelings in a safe, judgment-free space.'}</p>
           </a>
           <Link href="/checkin" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
              <div className="bg-orange-100 text-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                <List className="w-6 h-6" />
              </div>
-             <h3 className="text-base sm:text-lg font-bold mb-2">Daily Check-In</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground">Log your current mood to keep your weekly tracking accurate.</p>
+             <h3 className="text-base sm:text-lg font-bold mb-2">{t?.dashboard?.dailyCheckin || 'Daily Check-In'}</h3>
+             <p className="text-xs sm:text-sm text-muted-foreground">{t?.dashboard?.dailyCheckinDesc || 'Log your current mood to keep your weekly tracking accurate.'}</p>
           </Link>
         </div>
       </motion.div>
@@ -295,13 +297,13 @@ function DashboardContent() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-primary" /> Your Conversations
+              <MessageSquare className="w-5 h-5 text-primary" /> {t?.dashboard?.yourConversations || 'Your Conversations'}
             </h2>
             <button
               onClick={() => setShowConversations(!showConversations)}
               className="text-sm font-medium text-primary hover:underline"
             >
-              {showConversations ? 'Hide' : 'Show'} ({conversations.length})
+              {showConversations ? (t?.dashboard?.hide || 'Hide') : (t?.dashboard?.show || 'Show')} ({conversations.length})
             </button>
           </div>
 
@@ -310,7 +312,7 @@ function DashboardContent() {
               <div className="flex justify-between items-center mb-4">
                 <p className="text-sm text-muted-foreground">
                   <Shield className="w-4 h-4 inline mr-1" />
-                  All conversations are encrypted and auto-deleted after 90 days
+                  {t?.dashboard?.allConversationsEncrypted || 'All conversations are encrypted and auto-deleted after 90 days'}
                 </p>
                 {conversations.length > 0 && (
                   <button
@@ -318,7 +320,7 @@ function DashboardContent() {
                     className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1"
                   >
                     <Trash2 className="w-3 h-3" />
-                    Delete All
+                    {t?.dashboard?.deleteAll || 'Delete All'}
                   </button>
                 )}
               </div>
@@ -337,7 +339,7 @@ function DashboardContent() {
                         {new Date(conv.createdAt).toLocaleDateString()} at {new Date(conv.createdAt).toLocaleTimeString()}
                       </p>
                       <p className="text-sm font-medium mt-1">
-                        {conv.messages.length} messages
+                        {conv.messages.length} {t?.dashboard?.messages || 'messages'}
                       </p>
                     </div>
                     <button
@@ -358,7 +360,7 @@ function DashboardContent() {
                             : 'bg-secondary/50 text-foreground mr-4'
                         }`}
                       >
-                        <span className="font-semibold">{msg.role === 'user' ? 'You' : 'AI'}:</span>{' '}
+                        <span className="font-semibold">{msg.role === 'user' ? (t?.dashboard?.you || 'You') : (t?.dashboard?.ai || 'AI')}:</span>{' '}
                         {msg.content.substring(0, 100)}{msg.content.length > 100 ? '...' : ''}
                       </div>
                     ))}

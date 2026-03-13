@@ -6,6 +6,7 @@ import { ScrollControls } from '@react-three/drei';
 import { Scene } from '@/three/Scene';
 import Link from 'next/link';
 import { gsap } from 'gsap';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Register ScrollTrigger plugin only on client side
 if (typeof window !== 'undefined') {
@@ -21,6 +22,7 @@ export default function Home() {
   const ctaRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -86,19 +88,19 @@ export default function Home() {
 
                 <div className="glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-2xl md:max-w-4xl text-center space-y-4 sm:space-y-6 md:space-y-8 backdrop-blur-2xl pointer-events-auto">
                   <h1 className="responsive-hero font-black tracking-tight text-primary drop-shadow-sm leading-tight">
-                    Clarity for your <br />
+                    {t?.home?.hero || 'Clarity for your'} <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500">
-                      Beautiful Mind
+                      {t?.home?.beautifulMind || 'Beautiful Mind'}
                     </span>
                   </h1>
                   <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-light max-w-xs sm:max-w-xl md:max-w-2xl mx-auto">
-                    A minimalist, immersive scroll-based experience to track, understand, and nurture your mental well-being.
+                    {t?.home?.tagline || 'A minimalist, immersive scroll-based experience to track, understand, and nurture your mental well-being.'}
                   </p>
                   <p className="text-xs sm:text-sm font-semibold text-primary animate-bounce mt-6 sm:mt-8 md:mt-10 hide-mobile">
-                    Scroll down to explore
+                    {t?.home?.scrollDown || 'Scroll down to explore'}
                   </p>
                   <p className="text-xs font-semibold text-primary mt-6 show-mobile">
-                    Swipe up to explore
+                    {t?.home?.swipeUp || 'Swipe up to explore'}
                   </p>
                 </div>
               </section>
@@ -107,9 +109,9 @@ export default function Home() {
         <section ref={section2Ref} className="h-screen min-h-[calc(100vh_-_theme(space.14))] sm:min-h-[calc(100vh_-_theme(space.16))] flex items-center justify-start p-4 sm:p-6 md:p-8 md:pl-16 lg:pl-32 relative">
 
                 <div className="space-y-4 sm:space-y-6 glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-md lg:max-w-lg pointer-events-auto">
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">Discover Patterns</h2>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">{t?.home?.discoverPatterns || 'Discover Patterns'}</h2>
                   <p className="responsive-text text-muted-foreground">
-                    As you move forward, you uncover insights into what elevates your state of mind and what brings it down over time.
+                    {t?.home?.discoverPatternsDesc || 'As you move forward, you uncover insights into what elevates your state of mind and what brings it down over time.'}
                   </p>
                 </div>
               </section>
@@ -118,9 +120,9 @@ export default function Home() {
         <section ref={section3Ref} className="h-screen min-h-[calc(100vh_-_theme(space.14))] sm:min-h-[calc(100vh_-_theme(space.16))] flex items-center justify-end p-4 sm:p-6 md:p-8 md:pr-16 lg:pr-32 relative">
 
                 <div className="space-y-4 sm:space-y-6 glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-md lg:max-w-lg text-right pointer-events-auto">
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-emerald-500">Daily Rituals</h2>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-emerald-500">{t?.home?.dailyRituals || 'Daily Rituals'}</h2>
                   <p className="responsive-text text-muted-foreground">
-                    Connect with yourself through tracked moods, guided breathing, and anonymous ambient relaxation spaces.
+                    {t?.home?.dailyRitualsDesc || 'Connect with yourself through tracked moods, guided breathing, and anonymous ambient relaxation spaces.'}
                   </p>
                 </div>
               </section>
@@ -130,20 +132,20 @@ export default function Home() {
 
                 <div className="glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] max-w-xs sm:max-w-2xl md:max-w-4xl text-center space-y-6 sm:space-y-8 w-full pointer-events-auto">
                   <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
-                    A Safe, Private Space
+                    {t?.home?.safePrivateSpace || 'A Safe, Private Space'}
                   </h2>
                   <p className="responsive-text text-muted-foreground mx-auto max-w-xs sm:max-w-xl md:max-w-2xl">
-                    Take our guided PHQ-9 & GAD-7 based assessments completely anonymously, or create an account to save your journey.
+                    {t?.home?.safePrivateSpaceDesc || 'Take our guided PHQ-9 & GAD-7 based assessments completely anonymously, or create an account to save your journey.'}
                   </p>
                   <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 pt-6 sm:pt-8">
                     <Link href="/auth">
                       <button className="w-full sm:w-auto touch-button bg-white text-primary border border-primary/20 rounded-full text-base sm:text-lg font-semibold hover:bg-gray-50 transition-colors cursor-pointer">
-                        Sign In
+                        {t?.nav?.signIn || 'Sign In'}
                       </button>
                     </Link>
                     <Link href="/assessment">
                       <button className="w-full sm:w-auto touch-button bg-primary text-primary-foreground rounded-full text-base sm:text-lg font-semibold hover:scale-105 transition-transform shadow-md cursor-pointer">
-                        Try Anonymous
+                        {t?.home?.tryAnonymous || 'Try Anonymous'}
                       </button>
                     </Link>
                   </div>

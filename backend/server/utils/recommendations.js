@@ -35,11 +35,18 @@ const getRecommendations = (category) => {
   return recommendations[category] || [];
 };
 
-const getAIRecommendations = async (category, score, answers) => {
+const getAIRecommendations = async (category, score, answers, language = 'en') => {
   try {
     if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
       return getRecommendations(category);
     }
+
+    const languageInstructions = {
+      'en': 'Respond in English.',
+      'hi': 'आपको हिंदी में जवाब देना है। सरल और स्पष्ट हिंदी का उपयोग करें। (You must respond in Hindi. Use simple and clear Hindi.)',
+      'kn': 'ನೀವು ಕನ್ನಡದಲ್ಲಿ ಉತ್ತರಿಸಬೇಕು. ಸರಳ ಮತ್ತು ಸ್ಪಷ್ಟವಾದ ಕನ್ನಡವನ್ನು ಬಳಸಿ. (You must respond in Kannada. Use simple and clear Kannada.)'
+    };
+    const langInstruction = languageInstructions[language] || languageInstructions['en'];
 
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
     
@@ -51,6 +58,8 @@ Guidelines:
 - Do not diagnose or provide medical advice
 - Encourage professional help if needed
 - Format as a numbered list
+
+IMPORTANT: ${langInstruction}
 
 Provide exactly 5 recommendations:`;
 

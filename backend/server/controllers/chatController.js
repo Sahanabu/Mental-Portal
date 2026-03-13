@@ -3,7 +3,7 @@ const grok = require('./grokController');
 
 exports.chat = async (req, res) => {
   try {
-    const { message, sessionId } = req.body;
+    const { message, sessionId, language = 'en' } = req.body;
     const userId = req.userId;
 
     if (!message) {
@@ -34,10 +34,27 @@ exports.chat = async (req, res) => {
     let aiMessage = "I hear you. Whatever you're feeling is valid. Would you like to try a breathing exercise or talk more about what's on your mind?";
 
     try {
-      const prompt = 'You are Aura, a supportive mental wellness companion. Provide encouraging, non-medical guidance. Be empathetic. Do not diagnose.\n\nUser: ' + message + '\n\nSupportive response:';
+      const languageInstructions = {
+        'en': 'Respond in English.',
+        'hi': 'आपको हिंदी में जवाब देना है। सरल और स्पष्ट हिंदी का उपयोग करें। (You must respond in Hindi. Use simple and clear Hindi.)',
+        'kn': 'ನೀವು ಕನ್ನಡದಲ್ಲಿ ಉತ್ತರಿಸಬೇಕು. ಸರಳ ಮತ್ತು ಸ್ಪಷ್ಟವಾದ ಕನ್ನಡವನ್ನು ಬಳಸಿ. (You must respond in Kannada. Use simple and clear Kannada.)'
+      };
+      const langInstruction = languageInstructions[language] || languageInstructions['en'];
+      const prompt = `You are Aura, a supportive mental wellness companion. Provide encouraging, non-medical guidance. Be empathetic. Do not diagnose. 
+
+IMPORTANT: ${langInstruction}
+
+User: ${message}
+
+Supportive response:`;
+      
+      console.log('Calling Groq API with language:', language);
       aiMessage = await grok.chat(prompt);
+      console.log('Groq API response received:', aiMessage.substring(0, 50));
     } catch (error) {
-      console.error('Grok AI error:', error.message);
+      console.error('Grok AI error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
     }
 
     // Add AI response to conversation

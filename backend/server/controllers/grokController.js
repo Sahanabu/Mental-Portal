@@ -7,6 +7,9 @@ const openai = new OpenAI({
 
 exports.chat = async (prompt) => {
   try {
+    console.log('Groq API Key exists:', !!process.env.GROQ_API_KEY);
+    console.log('Groq API Key length:', process.env.GROQ_API_KEY?.length);
+    
     const completion = await openai.chat.completions.create({
       model: 'llama-3.1-8b-instant', // Correct Groq model name
       messages: [
@@ -22,10 +25,12 @@ exports.chat = async (prompt) => {
       max_tokens: 200,
       temperature: 0.7
     });
+    console.log('Groq API call successful');
     return completion.choices[0].message.content;
   } catch (error) {
-    console.error('Groq AI error:', error.message);
-    return "I'm here to support you. Let's talk about how you're feeling.";
+    console.error('Groq AI error details:', error);
+    console.error('Error response:', error.response?.data);
+    throw error;
   }
 };
 

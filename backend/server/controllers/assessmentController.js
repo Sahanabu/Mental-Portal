@@ -20,13 +20,13 @@ exports.generateQuestions = async (req, res) => {
 
 exports.analyzeAnswers = async (req, res) => {
   try {
-    const { answers, questions } = req.body;
+    const { answers, questions, language = 'en' } = req.body;
 
     if (!answers || !Array.isArray(answers) || answers.length !== 6) {
       return res.status(400).json({ message: '6 answers required' });
     }
 
-    const analysis = await grok.analyzeAnswers(answers, questions || []);
+    const analysis = await grok.analyzeAnswers(answers, questions || [], language);
 
     const assessment = new Assessment({
       userId: req.userId,
