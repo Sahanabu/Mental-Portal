@@ -133,3 +133,128 @@ Provide a brief, encouraging analysis of their progress (max 100 words). Highlig
     });
   }
 };
+
+exports.generateExercises = async (req, res) => {
+  try {
+    const { mood, language = 'en' } = req.body;
+
+    const prompt = `User mood: ${mood}
+
+Suggest 3 wellness exercises suitable for this mood.
+
+Each exercise must include:
+- title
+- description
+- duration
+- type (breathing, stretching, or physical)
+- animationType (breathingCircle, stretchGuide, or situpSimulation)
+- steps (array of 3 strings)
+
+Return ONLY valid JSON array format:
+[{"title":"...","description":"...","duration":"...","type":"...","animationType":"...","steps":["...","...","..."]}]`;
+
+    const aiMessage = await getAIResponse(prompt, language);
+
+    let exercises;
+    try {
+      const jsonMatch = aiMessage.match(/\[.*\]/s);
+      exercises = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    } catch (e) {
+      exercises = null;
+    }
+
+    if (!exercises || !Array.isArray(exercises)) {
+      exercises = getFallbackExercises(mood);
+    }
+
+    res.json({ exercises });
+  } catch (error) {
+    console.error('AI exercise generation error:', error.message);
+    res.json({ exercises: getFallbackExercises(req.body.mood) });
+  }
+};
+
+const getFallbackExercises = (mood) => {
+  const exercises = {
+    happy: [
+      {
+        title: "Energizing Breath",
+        description: "Boost your positive energy",
+        duration: "2 minutes",
+        type: "breathing",
+        animationType: "breathingCircle",
+        steps: ["Inhale deeply for 4 seconds", "Hold for 2 seconds", "Exhale slowly for 4 seconds"]
+      },
+      {
+        title: "Victory Stretch",
+        description: "Celebrate your good mood",
+        duration: "3 minutes",
+        type: "stretching",
+        animationType: "stretchGuide",
+        steps: ["Raise arms overhead", "Stretch to the sky", "Hold and breathe"]
+      },
+      {
+        title: "Power Squats",
+        description: "Channel your energy",
+        duration: "2 minutes",
+        type: "physical",
+        animationType: "situpSimulation",
+        steps: ["Stand with feet apart", "Lower into squat", "Rise back up"]
+      }
+    ],
+    anxious: [
+      {
+        title: "Calming Breath",
+        description: "Reduce anxiety and tension",
+        duration: "3 minutes",
+        type: "breathing",
+        animationType: "breathingCircle",
+        steps: ["Inhale for 4 seconds", "Hold for 4 seconds", "Exhale for 6 seconds"]
+      },
+      {
+        title: "Shoulder Release",
+        description: "Release tension",
+        duration: "2 minutes",
+        type: "stretching",
+        animationType: "stretchGuide",
+        steps: ["Roll shoulders back", "Hold for 5 seconds", "Repeat forward"]
+      },
+      {
+        title: "Gentle Walk",
+        description: "Light movement to calm",
+        duration: "5 minutes",
+        type: "physical",
+        animationType: "situpSimulation",
+        steps: ["Walk slowly", "Focus on breathing", "Stay present"]
+      }
+    ],
+    sad: [
+      {
+        title: "Uplifting Breath",
+        description: "Lift your spirits",
+        duration: "3 minutes",
+        type: "breathing",
+        animationType: "breathingCircle",
+        steps: ["Breathe in positivity", "Hold the feeling", "Release negativity"]
+      },
+      {
+        title: "Heart Opener",
+        description: "Open your chest",
+        duration: "2 minutes",
+        type: "stretching",
+        animationType: "stretchGuide",
+        steps: ["Clasp hands behind back", "Lift chest up", "Breathe deeply"]
+      },
+      {
+        title: "Light Movement",
+        description: "Gentle activity",
+        duration: "3 minutes",
+        type: "physical",
+        animationType: "situpSimulation",
+        steps: ["Move gently", "Stay mindful", "Be kind to yourself"]
+      }
+    ]
+  };
+
+  return exercises[mood] || exercises.anxious;
+};

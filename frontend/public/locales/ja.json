@@ -1,0 +1,71 @@
+{
+  "app": {
+    "title": "メンタルウェルネスポータル",
+    "tagline": "より良いメンタルヘルスへの旅はここから始まります"
+  },
+  "mood": {
+    "title": "今日の気分はいかがですか？",
+    "happy": "幸せ",
+    "neutral": "普通",
+    "sad": "悲しい",
+    "anxious": "不安",
+    "stressed": "ストレス",
+    "tired": "疲れた",
+    "logMood": "気分を記録",
+    "moodLogged": "気分が記録されました！",
+    "selectMood": "現在の気分を選択してください",
+    "howFeeling": "気分はいかがですか？",
+    "logCurrentMood": "時間の経過とともに感情的な健康を追跡するために、現在の気分を記録してください。",
+    "logging": "記録中...",
+    "moodLoggedSuccess": "気分が記録されました！",
+    "trackingStep": "チェックインしていただきありがとうございます。感情を追跡することは、マインドフルネスへの素晴らしい一歩です。",
+    "aiInsight": "AIインサイト"
+  },
+  "exercise": {
+    "title": "おすすめのエクササイズ",
+    "start": "エクササイズを開始",
+    "complete": "完了",
+    "abandon": "中止",
+    "delete": "削除",
+    "duration": "期間",
+    "inProgress": "進行中",
+    "completed": "完了しました",
+    "abandoned": "中止されました",
+    "reps": "回",
+    "targetReps": "目標回数",
+    "repDone": "1回完了",
+    "breathingExercise": "呼吸エクササイズ",
+    "stretchingExercise": "ストレッチエクササイズ",
+    "physicalExercise": "身体エクササイズ",
+    "inhale": "吸う",
+    "hold": "止める",
+    "exhale": "吐く",
+    "followSteps": "ステップに従ってください",
+    "generatingExercises": "エクササイズを生成中..."
+  },
+  "checkin": {
+    "title": "毎日の気分チェックイン",
+    "selectMood": "気分を選択してください"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "assessment": "評価",
+    "history": "履歴",
+    "checkin": "チェックイン",
+    "aiChat": "AIチャット",
+    "breathe": "呼吸",
+    "ambient": "アンビエント",
+    "resources": "リソース",
+    "logout": "ログアウト",
+    "signIn": "サインイン"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "delete": "削除",
+    "close": "閉じる"
+  }
+}

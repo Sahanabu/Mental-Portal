@@ -9,5 +9,6 @@ router.post('/ambient-guidance', auth, aiController.getAmbientGuidance);
 router.post('/resource-recommendations', auth, aiController.getResourceRecommendations);
 router.post('/checkin-insights', auth, aiController.getCheckinInsights);
 router.post('/history-analysis', auth, aiController.getHistoryAnalysis);
+router.post('/generate-exercises', auth, aiController.generateExercises);
 
 module.exports = router;

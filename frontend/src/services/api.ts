@@ -86,6 +86,8 @@ export const aiAPI = {
     api.post('/ai/checkin-insights', data),
   getHistoryAnalysis: (data: { assessments?: any[]; moodLogs?: any[]; language?: string }) =>
     api.post('/ai/history-analysis', data),
+  generateExercises: (data: { mood: string; language?: string }) =>
+    api.post('/ai/generate-exercises', data),
 };
 
 // Token management
