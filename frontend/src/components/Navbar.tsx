@@ -44,12 +44,12 @@ export function Navbar() {
         </Link>
         
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+        <div className="hidden md:flex items-center gap-2 md:gap-4 lg:gap-6">
           {navItems.map((item) => (
             <Link 
               key={item.href}
               href={item.href} 
-              className="text-xs xl:text-sm font-medium hover:text-primary transition-colors touch-target"
+              className="text-sm md:text-base font-semibold hover:text-primary transition-all duration-300 px-2 py-1 rounded-md hover:bg-primary/10 touch-target"
             >
               {item.label}
             </Link>
@@ -57,21 +57,21 @@ export function Navbar() {
           {isAuthenticated ? (
             <button
               onClick={handleLogout}
-              className="text-xs xl:text-sm font-medium hover:text-red-600 transition-colors touch-target flex items-center gap-2"
+              className="text-sm md:text-base font-semibold hover:text-red-600 transition-all duration-300 px-3 py-2 rounded-md hover:bg-red-50 flex items-center gap-2 touch-target"
             >
               <LogOut className="w-4 h-4" />
               Logout
             </button>
           ) : (
             <>
-              <Link href="/auth" className="text-xs xl:text-sm font-medium hover:text-primary transition-colors touch-target">
+              <Link href="/auth" className="text-sm md:text-base font-semibold hover:text-primary transition-all duration-300 px-3 py-2 rounded-md hover:bg-primary/10 touch-target">
                 Sign In
               </Link>
               <Link 
                 href="/assessment" 
-                className="text-xs xl:text-sm font-medium bg-primary text-primary-foreground px-3 py-2 xl:px-4 xl:py-2 rounded-full hover:bg-primary/90 transition-colors touch-target"
+                className="text-sm md:text-base font-bold bg-gradient-to-r from-primary to-primary/90 text-primary-foreground px-6 py-2 md:px-8 md:py-3 rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all duration-300 shadow-md touch-target"
               >
-                Get Started
+                Start Assessment
               </Link>
             </>
           )}
@@ -88,42 +88,44 @@ export function Navbar() {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="lg:hidden glass border-t border-green-100/30 p-4">
-          <div className="flex flex-col gap-3">
+        <div className="md:hidden glass border-t border-green-100/30 p-6 backdrop-blur-md">
+          <div className="flex flex-col gap-4">
             {navItems.map((item) => (
               <Link 
                 key={item.href}
                 href={item.href} 
-                className="text-sm font-medium hover:text-primary transition-colors py-2 touch-target"
+                className="text-base font-semibold hover:text-primary transition-all duration-300 px-4 py-3 rounded-lg hover:bg-primary/10 touch-target flex items-center gap-3"
                 onClick={() => setIsMenuOpen(false)}
               >
+                <div className="w-2 h-2 bg-primary rounded-full opacity-70" />
                 {item.label}
               </Link>
             ))}
-            <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-green-100/30">
+            <div className="flex flex-col gap-4 pt-4 border-t border-green-100/30">
               {isAuthenticated ? (
                 <button
                   onClick={handleLogout}
-                  className="text-sm font-medium hover:text-red-600 transition-colors touch-target text-center py-2 flex items-center justify-center gap-2"
+                  className="text-base font-semibold hover:text-red-600 transition-all duration-300 px-4 py-3 rounded-lg hover:bg-red-50 flex items-center gap-3 touch-target w-full justify-center"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-5 h-5" />
                   Logout
                 </button>
               ) : (
                 <>
                   <Link 
                     href="/auth" 
-                    className="text-sm font-medium hover:text-primary transition-colors touch-target text-center py-2"
+                    className="text-base font-semibold hover:text-primary transition-all duration-300 px-4 py-3 rounded-lg hover:bg-primary/10 touch-target w-full text-center flex items-center justify-center gap-3"
                     onClick={() => setIsMenuOpen(false)}
                   >
+                    <User className="w-5 h-5" />
                     Sign In
                   </Link>
                   <Link 
                     href="/assessment" 
-                    className="text-sm font-medium bg-primary text-primary-foreground px-4 py-2 rounded-full hover:bg-primary/90 transition-colors touch-target text-center"
+                    className="text-base font-bold bg-gradient-to-r from-primary to-primary/90 text-primary-foreground px-6 py-4 rounded-xl hover:shadow-xl hover:scale-[1.02] transition-all duration-300 shadow-lg touch-target w-full text-center flex items-center justify-center gap-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Get Started
+                    Start Free Assessment
                   </Link>
                 </>
               )}

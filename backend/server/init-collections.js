@@ -2,7 +2,8 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const Assessment = require('./models/Assessment');
-const MoodLog = require('./models/MoodLog');
+    const MoodLog = require('./models/MoodLog');
+    const Conversation = require('./models/Conversation');
 
 console.log('========================================');
 console.log('MongoDB Collections Initialization');
@@ -51,6 +52,16 @@ async function initializeCollections() {
       console.log('   - Added index on createdAt');
     } else {
       console.log('✓  moodlogs collection already exists');
+    }
+
+    if (!collectionNames.includes('conversations')) {
+      await db.createCollection('conversations');
+      console.log('✅ Created: conversations collection');
+      await Conversation.createIndexes();
+      console.log('   - Added index on userId');
+      console.log('   - Added index on createdAt');
+    } else {
+      console.log('✓  conversations collection already exists');
     }
 
     console.log('\n[4/4] Verifying collections...');

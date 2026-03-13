@@ -5,7 +5,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Brain, HeartPulse, List, Target, TrendingUp, User, MessageSquare, Shield, Trash2 } from 'lucide-react';
 import { MoodChart } from '@/components/MoodChart';
-import { moodAPI, chatAPI } from '@/services/api';
+import Link from 'next/link';
+import { moodAPI, chatAPI, authAPI } from '@/services/api';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -21,11 +22,30 @@ function DashboardContent() {
 
   useEffect(() => {
     const loadData = async () => {
-      // Get user info from localStorage
-      const email = localStorage.getItem('userEmail') || 'Anonymous User';
-      const name = localStorage.getItem('userName') || '';
-      setUserEmail(email);
-      setUserName(name);
+      // Check token first
+      const token = localStorage.getItem('token');
+      if (token) {
+        let email = localStorage.getItem('userEmail') || '';
+        let name = localStorage.getItem('userName') || '';
+        
+        if (!email || !name) {
+          try {
+            const profileResponse = await authAPI.getProfile();
+            email = profileResponse.data.email;
+            name = profileResponse.data.name;
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userName', name);
+          } catch {
+            console.log('Profile fetch failed');
+          }
+        }
+        
+        setUserEmail(email);
+        setUserName(name);
+      } else {
+        setUserEmail('Anonymous User');
+        setUserName('');
+      }
 
       if (rawScore) {
         setScore(parseInt(rawScore, 10));
@@ -129,7 +149,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto pt-20 sm:pt-24">
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
       {/* User Profile Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -139,10 +159,12 @@ function DashboardContent() {
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
           <User className="w-8 h-8 text-primary" />
         </div>
-        <div className="flex-1">
-          <h2 className="text-xl font-bold">{userName || 'Welcome'}</h2>
-          <p className="text-sm text-muted-foreground">{userEmail}</p>
-        </div>
+        {localStorage.getItem('token') ? (
+          <div className="flex-1">
+            <h2 className="text-xl font-bold">{userName || 'Welcome'}</h2>
+            <p className="text-sm text-muted-foreground">{userEmail}</p>
+          </div>
+        ) : null}
         <div className="flex items-center gap-2 text-xs text-green-600">
           <Shield className="w-4 h-4" />
           <span>Encrypted</span>
@@ -239,13 +261,13 @@ function DashboardContent() {
         ) : null}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <a href="/breathing" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
+          <Link href="/breathe" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
              <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                <HeartPulse className="w-6 h-6" />
              </div>
              <h3 className="text-base sm:text-lg font-bold mb-2">Guided Breathing</h3>
              <p className="text-xs sm:text-sm text-muted-foreground">Take a 3-minute breather to lower anxiety and center your mind.</p>
-          </a>
+          </Link>
           <a href="/chat" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
              <div className="bg-purple-100 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                <Brain className="w-6 h-6" />
@@ -253,18 +275,18 @@ function DashboardContent() {
              <h3 className="text-base sm:text-lg font-bold mb-2">AI Companion</h3>
              <p className="text-xs sm:text-sm text-muted-foreground">Chat out your feelings in a safe, judgment-free space.</p>
           </a>
-          <a href="/mood" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
+          <Link href="/checkin" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
              <div className="bg-orange-100 text-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                <List className="w-6 h-6" />
              </div>
              <h3 className="text-base sm:text-lg font-bold mb-2">Daily Check-In</h3>
              <p className="text-xs sm:text-sm text-muted-foreground">Log your current mood to keep your weekly tracking accurate.</p>
-          </a>
+          </Link>
         </div>
       </motion.div>
 
       {/* Conversations Section */}
-      {conversations.length > 0 && (
+      {localStorage.getItem('token') && conversations.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

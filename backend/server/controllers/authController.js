@@ -77,3 +77,19 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-passwordHash');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      userId: user._id,
+      email: user.email,
+      name: user.name
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

@@ -25,11 +25,17 @@ export const authAPI = {
     api.post('/auth/register', data),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
+  getProfile: () =>
+    api.get('/auth/profile'),
 };
 
 // Assessment API
 export const assessmentAPI = {
-  submit: (data: { answers: Record<number, number>; totalScore: number }) =>
+  generateQuestions: () =>
+    api.post('/assessment/questions'),
+  analyzeAnswers: (data: { answers: number[]; questions?: any[] }) =>
+    api.post('/assessment/analyze', data),
+  submit: (data: { answers: number[]; totalScore: number }) =>
     api.post('/assessment/submit', data),
   getHistory: () =>
     api.get('/assessment/history'),

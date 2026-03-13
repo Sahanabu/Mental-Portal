@@ -1,7 +1,5 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Conversation = require('../models/Conversation');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const grok = require('./grokController');
 
 exports.chat = async (req, res) => {
   try {
@@ -35,22 +33,11 @@ exports.chat = async (req, res) => {
 
     let aiMessage = "I hear you. Whatever you're feeling is valid. Would you like to try a breathing exercise or talk more about what's on your mind?";
 
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
-      try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-        
-        const prompt = `You are a supportive mental wellness companion. Provide encouraging, non-medical guidance. Be empathetic and understanding. Do not diagnose or provide medical advice. Always encourage seeking professional help for serious concerns.
-
-User message: ${message}
-
-Respond with supportive, caring advice (max 150 words):`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        aiMessage = response.text();
-      } catch (error) {
-        console.error('Gemini AI error:', error.message);
-      }
+    try {
+      const prompt = 'You are Aura, a supportive mental wellness companion. Provide encouraging, non-medical guidance. Be empathetic. Do not diagnose.\n\nUser: ' + message + '\n\nSupportive response:';
+      aiMessage = await grok.chat(prompt);
+    } catch (error) {
+      console.error('Grok AI error:', error.message);
     }
 
     // Add AI response to conversation
@@ -147,3 +134,4 @@ exports.deleteAllConversations = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete conversations' });
   }
 };
+

@@ -24,6 +24,8 @@ export default function AuthPage() {
         const response = await authAPI.login({ email: formData.username, password: formData.password });
         tokenManager.setToken(response.data.token);
         localStorage.setItem('userId', response.data.userId);
+        localStorage.setItem('userEmail', response.data.email);
+        localStorage.setItem('userName', response.data.name || '');
         router.push('/assessment');
       } else {
         const response = await authAPI.register({ 
@@ -33,6 +35,8 @@ export default function AuthPage() {
         });
         tokenManager.setToken(response.data.token);
         localStorage.setItem('userId', response.data.userId);
+        localStorage.setItem('userEmail', response.data.email);
+        localStorage.setItem('userName', response.data.name || '');
         router.push('/assessment');
       }
     } catch (err: any) {

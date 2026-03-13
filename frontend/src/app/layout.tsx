@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="en" className="antialiased" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen ambient-gradient-bg flex flex-col`} suppressHydrationWarning>
         <Navbar />
-        <main className="flex-1 overflow-hidden relative">
+<main className="flex-1 pt-14 sm:pt-16 pb-8 sm:pb-12 relative overflow-auto">
           {children}
         </main>
         <Footer />

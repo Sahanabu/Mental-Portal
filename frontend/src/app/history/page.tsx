@@ -138,7 +138,7 @@ export default function HistoryPage() {
                   </div>
                   
                   <div className="flex gap-2">
-                    {assessment.answers.map((answer, idx) => (
+                    {(assessment.answers || []).map((answer, idx) => (
                       <div
                         key={idx}
                         className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-secondary flex items-center justify-center text-sm font-bold"
