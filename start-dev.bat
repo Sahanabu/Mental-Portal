@@ -1,0 +1,6 @@
+@echo off
+echo Starting Mental Wellness Portal...
+echo Disabling Turbopack to avoid bundling issues...
+set NODE_OPTIONS=--max-old-space-size=4096
+npx next dev --port=3000
+pause
