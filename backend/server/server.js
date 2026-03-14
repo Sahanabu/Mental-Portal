@@ -15,13 +15,29 @@ const adaptiveAssessmentRoutes = require('./routes/adaptiveAssessmentRoutes');
 const dataRoutes = require('./routes/dataRoutes');
 const gameRoutes = require('./routes/gameRoutes');
 
-const app = express();
+const app = express();\n\nconsole.log('✅ Express app created');
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (graceful)\nconnectDB().catch((error) => {\n  console.error('❌ Database connection failed:', error.message);\n  console.log('📡 Server continuing without full DB for health/monitoring');\n});
 
 // Security middleware
 app.use(helmet());
+
+// OPTIONS preflight exemption for rate limiting
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    console.log(`[CORS] Preflight request from ${req.headers.origin} to ${req.path}`);
+    return next();
+  }
+  next();
+});
+
+// Rate limiting (after OPTIONS exemption)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
+
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -31,14 +47,11 @@ app.use(cors({
     process.env.FRONTEND_URL || 'https://mentalportal.netlify.app'
   ].filter(Boolean),
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use('/api/', limiter);
 
 // Body parser
 app.use(express.json());
@@ -52,12 +65,9 @@ app.use('/api/resources', resourcesRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/ai-assessment', adaptiveAssessmentRoutes);
 app.use('/api', dataRoutes);
-app.use('/api/games', gameRoutes);
+app.use('/api/games', gameRoutes);\n\nconsole.log('✅ All routes registered');
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Mental Wellness API is running' });
-});
+// Health check\napp.get('/api/health', (req, res) => {\n  res.json({ status: 'OK', message: 'Mental Wellness API is running', timestamp: new Date().toISOString() });\n});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -65,8 +75,4 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => {\n  console.log(`✅ Server running successfully on port ${PORT}`);\n});
