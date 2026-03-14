@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom CSS variables and styles - v3 compatible, identical UI to v4 version */
+/* Custom CSS variables and styles - v3 compatible, same UI */
 @layer base {
   :root {
     --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif,
@@ -100,12 +100,12 @@
     background-color: transparent;
   }
 
-  /* Dark mode support */
+  /* Dark mode variant support */
   .dark * {
     color-scheme: dark;
   }
 
-  /* Container utility - v3 equivalent */
+  /* Container utility */
   .container {
     margin-inline: auto;
     padding-inline: 2rem;
@@ -123,7 +123,7 @@
     }
   }
 
-  /* Ambient gradient backgrounds - identical */
+  /* Ambient gradient backgrounds */
   .ambient-gradient-bg {
     background: linear-gradient(135deg, 
       hsl(120 60% 97%), 
@@ -144,10 +144,9 @@
     transition: background 0.4s ease;
   }
 
-  /* Glassmorphism utilities - exact same appearance */
+  /* Glassmorphism - exact same visual */
   .glass {
     background: rgba(255, 255, 255, 0.4);
-    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(34, 197, 94, 0.3);
     box-shadow: 0 8px 32px rgba(34, 197, 94, 0.08);
@@ -157,16 +156,15 @@
   
   .dark .glass {
     background: rgba(255, 255, 255, 0.05);
-    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     @apply shadow-xl;
   }
 
+  /* Mobile glass */
   .glass-mobile {
     background: rgba(255, 255, 255, 0.4);
-    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(34, 197, 94, 0.4);
     @apply shadow-lg;
@@ -174,7 +172,6 @@
   
   .dark .glass-mobile {
     background: rgba(255, 255, 255, 0.05);
-    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     @apply shadow-lg;
@@ -183,7 +180,6 @@
   @media (min-width: 768px) {
     .glass-mobile {
       background: rgba(255, 255, 255, 0.4);
-      -webkit-backdrop-filter: blur(20px);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(34, 197, 94, 0.3);
       @apply shadow-xl;
@@ -191,14 +187,13 @@
     
     .dark .glass-mobile {
       background: rgba(255, 255, 255, 0.05);
-      -webkit-backdrop-filter: blur(20px);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       @apply shadow-xl;
     }
   }
 
-  /* Custom scrollbars */
+  /* Scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
   }
@@ -224,17 +219,42 @@
     background-color: hsl(224 20% 8%);
   }
 
-  /* All responsive utilities preserved */
-  .responsive-text { @apply text-sm sm:text-base md:text-lg; }
-  .responsive-heading { @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl; }
-  .responsive-hero { @apply text-3xl sm:text-5xl md:text-6xl lg:text-7xl; }
-  .responsive-padding { @apply p-4 sm:p-6 md:p-8 lg:p-12; }
-  .responsive-margin { @apply m-4 sm:m-6 md:m-8 lg:m-12; }
-  .responsive-grid { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4; }
-  .responsive-flex { @apply flex flex-col sm:flex-row; }
+  /* Responsive utilities - same as before */
+  .responsive-text {
+    @apply text-sm sm:text-base md:text-lg;
+  }
   
-  .touch-target { @apply min-h-[44px] min-w-[44px]; }
-  .touch-button { @apply min-h-[44px] min-w-[44px] px-4 py-3 sm:px-6 sm:py-4; }
+  .responsive-heading {
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl;
+  }
+  
+  .responsive-hero {
+    @apply text-3xl sm:text-5xl md:text-6xl lg:text-7xl;
+  }
+  
+  .responsive-padding {
+    @apply p-4 sm:p-6 md:p-8 lg:p-12;
+  }
+  
+  .responsive-margin {
+    @apply m-4 sm:m-6 md:m-8 lg:m-12;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .touch-button {
+    @apply min-h-[44px] min-w-[44px] px-4 py-3 sm:px-6 sm:py-4;
+  }
   
   .scene-container {
     width: 100%;
@@ -242,17 +262,27 @@
     min-height: 100vh;
   }
 
-  /* Nature-inspired utilities - identical */
+  /* Nature gradients - same visual */
   .nature-gradient {
-    background: linear-gradient(135deg, hsl(var(--sage)), hsl(var(--mint)), hsl(var(--sky)));
+    background: linear-gradient(135deg, 
+      hsl(var(--sage)), 
+      hsl(var(--mint)), 
+      hsl(var(--sky))
+    );
   }
   
   .earth-gradient {
-    background: linear-gradient(135deg, hsl(var(--earth)), hsl(var(--sage)));
+    background: linear-gradient(135deg, 
+      hsl(var(--earth)), 
+      hsl(var(--sage))
+    );
   }
   
   .forest-gradient {
-    background: linear-gradient(135deg, hsl(var(--forest)), hsl(142 76% 36%));
+    background: linear-gradient(135deg, 
+      hsl(var(--forest)), 
+      hsl(142 76% 36%)
+    );
   }
   
   .calm-shadow {
@@ -263,7 +293,7 @@
     border: 1px solid rgba(34, 197, 94, 0.2);
   }
   
-  /* Animations - exact */
+  /* Animations */
   @keyframes accordion-down {
     from { height: 0; }
     to { height: var(--radix-accordion-content-height); }
@@ -283,28 +313,39 @@
     animation: breathe 4s ease-in-out infinite;
   }
   
-  .responsive-icon { @apply w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6; }
+  .responsive-icon {
+    @apply w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6;
+  }
 
-  /* Landing page utilities preserved */
+  /* Landing page */
   .landing-root {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    width: 100vw; height: 100dvh; overflow: hidden;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
     z-index: 10;
   }
+  
   .landing-scroll {
-    position: absolute; inset: 0;
-    overflow-y: auto; overflow-x: hidden;
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
   }
+  
   .landing-scroll > section {
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }
 
-  /* Responsive breakpoint helpers */
+  /* Breakpoint helpers */
   @media (max-width: 640px) {
     .hide-mobile { display: none; }
     .show-mobile { display: block; }
@@ -316,11 +357,12 @@
     .show-mobile { display: none; }
   }
 
-  /* Legacy touch utilities */
+  /* Touch utilities */
   .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
+  
   .text-balance {
     text-wrap: balance;
   }
