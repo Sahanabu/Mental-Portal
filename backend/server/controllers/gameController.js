@@ -69,9 +69,15 @@ ${memoryExtra}`;
 // POST /api/games/challenge  (public — no auth needed to generate)
 exports.generateChallenge = async (req, res) => {
   try {
-    const { gameType = 'logic', difficulty = 'medium' } = req.body;
+    const { gameType = 'logic', difficulty = 'medium', language = 'en' } = req.body;
     const label = TYPE_LABELS[gameType] || 'logic reasoning';
     const isMemory = gameType === 'memory';
+
+    const langInstruction = language === 'hi'
+      ? 'Write the question, options, hint and correctAnswer in Hindi (Devanagari script).'
+      : language === 'kn'
+      ? 'Write the question, options, hint and correctAnswer in Kannada script.'
+      : 'Write everything in English.';
 
     const memoryExtra = isMemory
       ? `- "memorySequence": array of strings to memorize BEFORE the question (4-6 items easy, 6-8 medium, 8-10 hard)
@@ -80,6 +86,7 @@ exports.generateChallenge = async (req, res) => {
       : `- "memorySequence": null\n- "memoryDuration": null`;
 
     const prompt = `Generate one unique ${difficulty} ${label} challenge.
+${langInstruction}
 Return ONLY valid JSON, no markdown:
 {
   "type": "${gameType}",

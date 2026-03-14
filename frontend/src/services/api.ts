@@ -122,7 +122,7 @@ export const dashboardAPI = {
 
 // Games API
 export const gameAPI = {
-  generateChallenge: (data: { gameType: string; difficulty: string }) =>
+  generateChallenge: (data: { gameType: string; difficulty: string; language?: string }) =>
     api.post('/games/challenge', data),
   generateSession: (data: { gameType: string; difficulty: string; count: number }) =>
     api.post('/games/session/generate', data),

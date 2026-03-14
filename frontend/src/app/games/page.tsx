@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Zap, Hash, Type, Layers, Trophy, Star, RotateCcw, ChevronRight, Lock, CheckCircle2, XCircle, Loader2, TrendingUp, Target, Award, Medal, ChevronLeft, Users } from 'lucide-react';
 import { gameAPI } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type GameType = 'logic' | 'pattern' | 'word' | 'number' | 'memory';
@@ -26,12 +27,12 @@ interface LeaderboardEntry { userId: string; username: string; bestScore: number
 interface LeaderboardPagination { page: number; pageSize: number; total: number; totalPages: number; }
 
 // ── Game category config ───────────────────────────────────────────────────
-const GAME_CATEGORIES = [
+const getGameCategories = (g: any) => [
   {
     id: 'logic' as GameType,
-    label: 'Logic Challenges',
+    label: g?.categories?.logic ?? 'Logic Challenges',
     icon: Brain,
-    desc: 'Test your reasoning and deductive thinking',
+    desc: g?.categories?.logicDesc ?? 'Test your reasoning and deductive thinking',
     gradient: 'from-violet-500 to-purple-600',
     glow: 'shadow-violet-500/30',
     bg: 'bg-violet-500/10',
@@ -40,9 +41,9 @@ const GAME_CATEGORIES = [
   },
   {
     id: 'pattern' as GameType,
-    label: 'Pattern Recognition',
+    label: g?.categories?.pattern ?? 'Pattern Recognition',
     icon: Layers,
-    desc: 'Spot sequences and visual patterns',
+    desc: g?.categories?.patternDesc ?? 'Spot sequences and visual patterns',
     gradient: 'from-cyan-500 to-blue-600',
     glow: 'shadow-cyan-500/30',
     bg: 'bg-cyan-500/10',
@@ -51,9 +52,9 @@ const GAME_CATEGORIES = [
   },
   {
     id: 'word' as GameType,
-    label: 'Word Puzzles',
+    label: g?.categories?.word ?? 'Word Puzzles',
     icon: Type,
-    desc: 'Riddles, anagrams and wordplay',
+    desc: g?.categories?.wordDesc ?? 'Riddles, anagrams and wordplay',
     gradient: 'from-emerald-500 to-teal-600',
     glow: 'shadow-emerald-500/30',
     bg: 'bg-emerald-500/10',
@@ -62,9 +63,9 @@ const GAME_CATEGORIES = [
   },
   {
     id: 'number' as GameType,
-    label: 'Number Puzzles',
+    label: g?.categories?.number ?? 'Number Puzzles',
     icon: Hash,
-    desc: 'Sequences, arithmetic and math tricks',
+    desc: g?.categories?.numberDesc ?? 'Sequences, arithmetic and math tricks',
     gradient: 'from-orange-500 to-amber-600',
     glow: 'shadow-orange-500/30',
     bg: 'bg-orange-500/10',
@@ -73,9 +74,9 @@ const GAME_CATEGORIES = [
   },
   {
     id: 'memory' as GameType,
-    label: 'Memory Challenges',
+    label: g?.categories?.memory ?? 'Memory Challenges',
     icon: Zap,
-    desc: 'Train your short-term memory',
+    desc: g?.categories?.memoryDesc ?? 'Train your short-term memory',
     gradient: 'from-pink-500 to-rose-600',
     glow: 'shadow-pink-500/30',
     bg: 'bg-pink-500/10',
@@ -85,9 +86,9 @@ const GAME_CATEGORIES = [
 ];
 
 const DIFFICULTY_CONFIG = {
-  easy:   { label: 'Easy',   color: 'text-green-600 bg-green-50 border-green-200',   xp: 10,  score: 100 },
-  medium: { label: 'Medium', color: 'text-yellow-600 bg-yellow-50 border-yellow-200', xp: 20,  score: 200 },
-  hard:   { label: 'Hard',   color: 'text-red-600 bg-red-50 border-red-200',          xp: 35,  score: 350 },
+  easy:   { color: 'text-green-600 bg-green-50 border-green-200',   xp: 10,  score: 100 },
+  medium: { color: 'text-yellow-600 bg-yellow-50 border-yellow-200', xp: 20,  score: 200 },
+  hard:   { color: 'text-red-600 bg-red-50 border-red-200',          xp: 35,  score: 350 },
 };
 
 // ── Confetti component ─────────────────────────────────────────────────────
@@ -117,6 +118,10 @@ function Confetti() {
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 export default function GamesPage() {
+  const { t: translations, language } = useLanguage();
+  const g = translations?.games ?? {};
+  const GAME_CATEGORIES = getGameCategories(g);
+  const diffLabel = { easy: g.easy ?? 'Easy', medium: g.medium ?? 'Medium', hard: g.hard ?? 'Hard' };
   const [phase, setPhase] = useState<Phase>('hub');
   const [selectedType, setSelectedType] = useState<GameType>('logic');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -181,7 +186,7 @@ export default function GamesPage() {
     setIsCorrect(null);
     setShowHint(false);
     try {
-      const res = await gameAPI.generateChallenge({ gameType: type, difficulty: diff });
+      const res = await gameAPI.generateChallenge({ gameType: type, difficulty: diff, language });
       setChallenge(res.data.challenge);
       if (type === 'memory' && res.data.challenge.memorySequence?.length) {
         setMemCountdown(res.data.challenge.memoryDuration ?? 8);
@@ -264,8 +269,8 @@ export default function GamesPage() {
               <Trophy className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-foreground">Game Hub</h1>
-              <p className="text-xs text-muted-foreground">AI-powered cognitive challenges</p>
+              <h1 className="text-2xl font-extrabold text-foreground">{g.title ?? 'Game Hub'}</h1>
+              <p className="text-xs text-muted-foreground">{g.subtitle ?? 'AI-powered cognitive challenges'}</p>
             </div>
           </div>
 
@@ -274,17 +279,17 @@ export default function GamesPage() {
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
               className="flex items-center gap-3 glass rounded-2xl px-4 py-2 border border-white/30">
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Score</p>
+                <p className="text-xs text-muted-foreground">{g.score ?? 'Score'}</p>
                 <p className="text-sm font-black text-primary">{sessionScore}</p>
               </div>
               <div className="w-px h-8 bg-border" />
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">XP</p>
+                <p className="text-xs text-muted-foreground">{g.xp ?? 'XP'}</p>
                 <p className="text-sm font-black text-amber-500">+{sessionXP}</p>
               </div>
               <div className="w-px h-8 bg-border" />
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Played</p>
+                <p className="text-xs text-muted-foreground">{g.played ?? 'Played'}</p>
                 <p className="text-sm font-black text-foreground">{gamesPlayed}</p>
               </div>
             </motion.div>
@@ -299,7 +304,7 @@ export default function GamesPage() {
 
               {/* Difficulty selector */}
               <div className="flex items-center gap-2 mb-6">
-                <span className="text-sm font-semibold text-muted-foreground mr-1">Difficulty:</span>
+                <span className="text-sm font-semibold text-muted-foreground mr-1">{g.difficulty ?? 'Difficulty'}:</span>
                 {(['easy', 'medium', 'hard'] as Difficulty[]).map(d => (
                   <button key={d} onClick={() => setDifficulty(d)}
                     className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
@@ -307,7 +312,7 @@ export default function GamesPage() {
                         ? DIFFICULTY_CONFIG[d].color + ' scale-105 shadow-sm'
                         : 'border-border/50 bg-white/40 text-muted-foreground hover:border-primary/40'
                     }`}>
-                    {DIFFICULTY_CONFIG[d].label}
+                    {diffLabel[d]}
                   </button>
                 ))}
               </div>
@@ -333,7 +338,7 @@ export default function GamesPage() {
 
                     <div className="flex items-center justify-between">
                       <span className={`text-xs font-bold px-2 py-1 rounded-full border ${DIFFICULTY_CONFIG[difficulty].color}`}>
-                        {DIFFICULTY_CONFIG[difficulty].label} · +{DIFFICULTY_CONFIG[difficulty].xp} XP
+                        {diffLabel[difficulty]} · +{DIFFICULTY_CONFIG[difficulty].xp} {g.xp ?? 'XP'}
                       </span>
                       <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </div>
@@ -347,14 +352,14 @@ export default function GamesPage() {
                   className="glass rounded-3xl border border-white/30 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-4 h-4 text-primary" />
-                    <h2 className="font-bold text-foreground">Your Stats</h2>
+                    <h2 className="font-bold text-foreground">{g.yourStats ?? 'Your Stats'}</h2>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {[
-                      { label: 'Games Played', value: stats.total, icon: '🎮' },
-                      { label: 'Correct', value: stats.correct, icon: '✅' },
-                      { label: 'Accuracy', value: `${stats.accuracy}%`, icon: '🎯' },
-                      { label: 'Total XP', value: stats.totalXP, icon: '⭐' },
+                      { label: g.gamesPlayed ?? 'Games Played', value: stats.total, icon: '🎮' },
+                      { label: g.correct ?? 'Correct', value: stats.correct, icon: '✅' },
+                      { label: g.accuracy ?? 'Accuracy', value: `${stats.accuracy}%`, icon: '🎯' },
+                      { label: g.totalXP ?? 'Total XP', value: stats.totalXP, icon: '⭐' },
                     ].map(s => (
                       <div key={s.label} className="text-center p-3 bg-white/40 rounded-2xl">
                         <div className="text-xl mb-1">{s.icon}</div>
@@ -366,7 +371,7 @@ export default function GamesPage() {
 
                   {recentGames.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-border/30">
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Recent Games</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{g.recentGames ?? 'Recent Games'}</p>
                       <div className="space-y-2">
                         {recentGames.map((g, i) => {
                           const firstQ = g.questions?.[0];
@@ -401,10 +406,10 @@ export default function GamesPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Medal className="w-4 h-4 text-amber-500" />
-                    <h2 className="font-bold text-foreground">Leaderboard</h2>
+                    <h2 className="font-bold text-foreground">{g.leaderboard ?? 'Leaderboard'}</h2>
                     {lbPagination && lbPagination.total > 0 && (
                       <span className="text-xs text-muted-foreground bg-white/40 border border-border/30 rounded-full px-2 py-0.5">
-                        {(lbPage - 1) * PAGE_SIZE + 1}–{Math.min(lbPage * PAGE_SIZE, lbPagination.total)} of {lbPagination.total}
+                        {(lbPage - 1) * PAGE_SIZE + 1}–{Math.min(lbPage * PAGE_SIZE, lbPagination.total)} {g.of ?? 'of'} {lbPagination.total}
                       </span>
                     )}
                   </div>
@@ -434,7 +439,7 @@ export default function GamesPage() {
                 ) : leaderboard.length === 0 ? (
                   <div className="text-center py-8 text-sm text-muted-foreground">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    No games played yet. Be the first!
+                    {g.noGames ?? 'No games played yet. Be the first!'}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -456,9 +461,9 @@ export default function GamesPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-bold truncate ${isMe ? 'text-primary' : 'text-foreground'}`}>
-                              {entry.username}{isMe && <span className="text-xs font-normal ml-1 text-primary/70">(you)</span>}
+                              {entry.username}{isMe && <span className="text-xs font-normal ml-1 text-primary/70">({translations?.dashboard?.you ?? 'you'})</span>}
                             </p>
-                            <p className="text-xs text-muted-foreground">{entry.gamesPlayed} games · {entry.accuracy}% acc</p>
+                            <p className="text-xs text-muted-foreground">{entry.gamesPlayed} {g.games ?? 'games'} · {entry.accuracy}% acc</p>
                           </div>
                           <div className="text-right shrink-0">
                             <p className="text-sm font-black text-foreground">{entry.bestScore.toLocaleString()}</p>
@@ -475,7 +480,7 @@ export default function GamesPage() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                   className="mt-4 flex items-center gap-2 text-sm text-muted-foreground glass rounded-2xl p-4 border border-white/30">
                   <Lock className="w-4 h-4 shrink-0" />
-                  Sign in to save your game progress and track XP across sessions.
+                  {g.signInToSave ?? 'Sign in to save your game progress and track XP across sessions.'}
                 </motion.div>
               )}
             </motion.div>
@@ -495,9 +500,9 @@ export default function GamesPage() {
                 {/* Label */}
                 <div className="text-center">
                   <span className="text-xs font-bold uppercase tracking-widest text-pink-500 bg-pink-500/10 border border-pink-500/30 px-3 py-1 rounded-full">
-                    ⚡ Memorize this sequence
+                    ⚡ {g.memorize ?? 'Memorize this sequence'}
                   </span>
-                  <p className="text-sm text-muted-foreground mt-2">It will disappear when the timer ends</p>
+                  <p className="text-sm text-muted-foreground mt-2">{g.memorizeDesc ?? 'It will disappear when the timer ends'}</p>
                 </div>
 
                 {/* Sequence display */}
@@ -533,7 +538,7 @@ export default function GamesPage() {
 
                 <button onClick={() => setPhase('playing')}
                   className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors">
-                  Skip → Go to question
+                  {g.skip ?? 'Skip → Go to question'}
                 </button>
               </motion.div>
             );
@@ -547,8 +552,8 @@ export default function GamesPage() {
                 {selectedCategory?.emoji}
               </div>
               <div className="text-center">
-                <p className="font-bold text-foreground text-lg">Generating Challenge...</p>
-                <p className="text-sm text-muted-foreground mt-1">AI is crafting a unique puzzle for you</p>
+                <p className="font-bold text-foreground text-lg">{g.generating ?? 'Generating Challenge...'}</p>
+                <p className="text-sm text-muted-foreground mt-1">{g.aiCrafting ?? 'AI is crafting a unique puzzle for you'}</p>
               </div>
               <div className="flex gap-1">
                 {[0, 1, 2].map(i => (
@@ -568,11 +573,11 @@ export default function GamesPage() {
               {/* Top bar */}
               <div className="flex items-center justify-between">
                 <button onClick={backToHub} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  ← Back
+                  {g.back ?? '← Back'}
                 </button>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-bold px-3 py-1 rounded-full border ${DIFFICULTY_CONFIG[challenge.difficulty as Difficulty]?.color || ''}`}>
-                    {challenge.difficulty}
+                    {diffLabel[challenge.difficulty as Difficulty] ?? challenge.difficulty}
                   </span>
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
                     {selectedCategory?.label}
@@ -599,7 +604,7 @@ export default function GamesPage() {
                     {!showHint ? (
                       <button onClick={() => setShowHint(true)}
                         className="text-xs text-primary/70 hover:text-primary transition-colors underline underline-offset-2">
-                        Show hint
+                        {g.showHint ?? 'Show hint'}
                       </button>
                     ) : (
                       <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
@@ -667,10 +672,10 @@ export default function GamesPage() {
 
               <div className="text-center">
                 <h2 className={`text-2xl font-black mb-1 ${isCorrect ? 'text-green-600' : 'text-red-500'}`}>
-                  {isCorrect ? 'Correct!' : 'Not quite!'}
+                  {isCorrect ? (g.correct_answer ?? 'Correct!') : (g.wrong_answer ?? 'Not quite!')}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {isCorrect ? 'Great thinking! Keep it up.' : `The correct answer was: "${challenge.correctAnswer}"`}
+                  {isCorrect ? (g.correctMsg ?? 'Great thinking! Keep it up.') : `${g.wrongMsg ?? 'The correct answer was:'} "${challenge.correctAnswer}"`}
                 </p>
               </div>
 
@@ -679,11 +684,11 @@ export default function GamesPage() {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                   className="flex gap-4">
                   <div className="text-center glass rounded-2xl px-6 py-4 border border-primary/20">
-                    <p className="text-xs text-muted-foreground mb-1">Score</p>
+                    <p className="text-xs text-muted-foreground mb-1">{g.score ?? 'Score'}</p>
                     <p className="text-3xl font-black text-primary">+{score}</p>
                   </div>
                   <div className="text-center glass rounded-2xl px-6 py-4 border border-amber-200">
-                    <p className="text-xs text-muted-foreground mb-1">XP Earned</p>
+                    <p className="text-xs text-muted-foreground mb-1">{g.xp ?? 'XP'}</p>
                     <p className="text-3xl font-black text-amber-500">+{xpEarned}</p>
                   </div>
                 </motion.div>
@@ -691,27 +696,27 @@ export default function GamesPage() {
 
               {/* Session running total */}
               <div className="glass rounded-2xl px-6 py-3 border border-white/30 flex items-center gap-4 text-sm">
-                <span className="text-muted-foreground">Session:</span>
-                <span className="font-bold text-foreground">{gamesPlayed} games</span>
-                <span className="text-primary font-bold">{sessionScore} pts</span>
-                <span className="text-amber-500 font-bold">+{sessionXP} XP</span>
+                <span className="text-muted-foreground">{g.session ?? 'Session'}:</span>
+                <span className="font-bold text-foreground">{gamesPlayed} {g.games ?? 'games'}</span>
+                <span className="text-primary font-bold">{sessionScore} {g.pts ?? 'pts'}</span>
+                <span className="text-amber-500 font-bold">+{sessionXP} {g.xp ?? 'XP'}</span>
               </div>
 
               {/* Actions */}
               <div className="flex gap-3 w-full max-w-sm">
                 <button onClick={backToHub}
                   className="flex-1 py-3 rounded-2xl border border-border/50 bg-white/40 text-sm font-semibold hover:bg-white/60 transition-colors flex items-center justify-center gap-2">
-                  <Trophy className="w-4 h-4" /> Hub
+                  <Trophy className="w-4 h-4" /> {g.hub ?? 'Hub'}
                 </button>
                 <button onClick={playAgain}
                   className="flex-1 py-3 bg-primary text-primary-foreground rounded-2xl text-sm font-bold hover:scale-[1.02] transition-transform shadow-md flex items-center justify-center gap-2">
-                  <RotateCcw className="w-4 h-4" /> Play Again
+                  <RotateCcw className="w-4 h-4" /> {g.playAgain ?? 'Play Again'}
                 </button>
               </div>
 
               {!isLoggedIn && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> Sign in to save your progress
+                  <Lock className="w-3 h-3" /> {g.signInProgress ?? 'Sign in to save your progress'}
                 </p>
               )}
             </motion.div>
