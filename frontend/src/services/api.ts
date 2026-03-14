@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mental-wellness-api.onrender.com/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mental-portal.onrender.com/api';
 
 // Create axios instance
 export const api = axios.create({
