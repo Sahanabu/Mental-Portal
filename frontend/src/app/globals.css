@@ -1,10 +1,18 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Your custom styles below */
+
 
 @layer utilities {
   /* Touch-friendly interactions */
   .touch-target {
     min-height: 44px;
     min-width: 44px;
+  }
+  .text-balance {
+    text-wrap: balance;
   }
   
   .touch-button {
