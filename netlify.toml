@@ -7,5 +7,63 @@
   NODE_VERSION = "18"
   NEXT_TELEMETRY_DISABLED = "1"
 
+[functions]
+  directory = "netlify/functions"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard"
+  status = 200
+
+[[redirects]]
+  from = "/assessment"
+  to = "/assessment"
+  status = 200
+
+[[redirects]]
+  from = "/history"
+  to = "/history"
+  status = 200
+
+[[redirects]]
+  from = "/checkin"
+  to = "/checkin"
+  status = 200
+
+[[redirects]]
+  from = "/chat"
+  to = "/chat"
+  status = 200
+
+[[redirects]]
+  from = "/breathe"
+  to = "/breathe"
+  status = 200
+
+[[redirects]]
+  from = "/ambient"
+  to = "/ambient"
+  status = 200
+
+[[redirects]]
+  from = "/resources"
+  to = "/resources"
+  status = 200
+
+[[redirects]]
+  from = "/games"
+  to = "/games"
+  status = 200
+
+[[redirects]]
+  from = "/auth"
+  to = "/auth"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

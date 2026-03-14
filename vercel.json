@@ -3,5 +3,18 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "rewrites": [
+    { "source": "/dashboard", "destination": "/dashboard" },
+    { "source": "/assessment", "destination": "/assessment" },
+    { "source": "/history", "destination": "/history" },
+    { "source": "/checkin", "destination": "/checkin" },
+    { "source": "/chat", "destination": "/chat" },
+    { "source": "/breathe", "destination": "/breathe" },
+    { "source": "/ambient", "destination": "/ambient" },
+    { "source": "/resources", "destination": "/resources" },
+    { "source": "/games", "destination": "/games" },
+    { "source": "/auth", "destination": "/auth" },
+    { "source": "/(.*)", "destination": "/$1" }
+  ]
 }
