@@ -25,8 +25,10 @@ app.use(helmet());
 app.use(cors({
   origin: [
     'http://localhost:3000',
+    'https://mentalportal.netlify.app',
     /\.vercel\.app$/,
-    process.env.FRONTEND_URL,
+    /\.netlify\.app$/,
+    process.env.FRONTEND_URL || 'https://mentalportal.netlify.app'
   ].filter(Boolean),
   credentials: true,
 }));
