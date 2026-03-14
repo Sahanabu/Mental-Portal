@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Brain, Menu, X, LogOut, User } from 'lucide-react';
+import { Brain, Menu, X, LogOut, User, Gamepad2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { tokenManager } from '@/services/api';
 import { useRouter } from 'next/navigation';
@@ -36,6 +36,7 @@ export function Navbar() {
     { href: '/assessment', label: t?.nav?.assessment || 'Assessment' },
     { href: '/history', label: t?.nav?.history || 'History' },
     { href: '/checkin', label: t?.nav?.checkin || 'Check-in' },
+    { href: '/games', label: t?.nav?.games || 'Games' },
     { href: '/chat', label: t?.nav?.aiChat || 'AI Chat' },
     { href: '/breathe', label: t?.nav?.breathe || 'Breathe' },
     { href: '/ambient', label: t?.nav?.ambient || 'Ambient' },

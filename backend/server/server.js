@@ -13,6 +13,7 @@ const resourcesRoutes = require('./routes/resourcesRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const adaptiveAssessmentRoutes = require('./routes/adaptiveAssessmentRoutes');
 const dataRoutes = require('./routes/dataRoutes');
+const gameRoutes = require('./routes/gameRoutes');
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use('/api/resources', resourcesRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/ai-assessment', adaptiveAssessmentRoutes);
 app.use('/api', dataRoutes);
+app.use('/api/games', gameRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

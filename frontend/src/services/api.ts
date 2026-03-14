@@ -120,6 +120,23 @@ export const dashboardAPI = {
     api.get(`/dashboard/user/${userId}`),
 };
 
+// Games API
+export const gameAPI = {
+  generateChallenge: (data: { gameType: string; difficulty: string }) =>
+    api.post('/games/challenge', data),
+  generateSession: (data: { gameType: string; difficulty: string; count: number }) =>
+    api.post('/games/session/generate', data),
+  saveSession: (data: {
+    gameType: string; difficulty: string; questions: {
+      question: string; options: string[]; correctAnswer: string; userAnswer: string;
+    }[];
+  }) => api.post('/games/session/save', data),
+  getUserSessions: (userId: string) =>
+    api.get(`/games/sessions/${userId}`),
+  getLeaderboard: (params?: { gameType?: string; difficulty?: string; limit?: number }) =>
+    api.get('/games/leaderboard', { params }),
+};
+
 // Token management
 export const tokenManager = {
   setToken: (token: string) => {

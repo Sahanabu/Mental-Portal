@@ -3,13 +3,13 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Brain, HeartPulse, List, Target, TrendingUp, User, MessageSquare, Shield, Trash2 } from 'lucide-react';
+import { Activity, Brain, HeartPulse, List, Target, TrendingUp, User, MessageSquare, Shield, Trash2, Gamepad2, CheckCircle2, XCircle, Star } from 'lucide-react';
 import { MoodChart } from '@/components/MoodChart';
 import { RecoveryVideoSection } from '@/components/RecoveryVideoSection';
 import { MusicTherapySection } from '@/components/MusicTherapySection';
 import { MovieSuggestionSection } from '@/components/MovieSuggestionSection';
 import Link from 'next/link';
-import { moodAPI, chatAPI, authAPI, dashboardAPI } from '@/services/api';
+import { moodAPI, chatAPI, authAPI, dashboardAPI, gameAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { decrypt } from '@/lib/crypto';
 
@@ -28,6 +28,8 @@ function DashboardContent() {
   const [showConversations, setShowConversations] = useState(false);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [dbStats, setDbStats] = useState<{ totalAssessments: number; totalMoodLogs: number; totalInteractions: number } | null>(null);
+  const [gameStats, setGameStats] = useState<{ total: number; correct: number; accuracy: number; totalXP: number } | null>(null);
+  const [recentGames, setRecentGames] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -138,6 +140,18 @@ function DashboardContent() {
     };
 
     loadData();
+
+    // Load game stats separately (non-blocking)
+    const uid = localStorage.getItem('userId');
+    const tok = localStorage.getItem('token');
+    if (uid && tok) {
+      gameAPI.getUserSessions(uid)
+        .then(res => {
+          setGameStats(res.data.stats);
+          setRecentGames(res.data.sessions.slice(0, 4));
+        })
+        .catch(() => {});
+    }
   }, [rawScore]);
 
   const handleDeleteConversation = async (sessionId: string) => {
@@ -373,6 +387,62 @@ function DashboardContent() {
 
       {rawScore && (
         <MovieSuggestionSection mood={status} />
+      )}
+
+      {/* Game Activity Section */}
+      {gameStats && gameStats.total > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+              <Gamepad2 className="w-5 h-5 text-violet-500" /> Game Activity
+            </h2>
+            <Link href="/games" className="text-sm font-medium text-primary hover:underline">Play Games →</Link>
+          </div>
+          <div className="glass-mobile rounded-3xl border border-white/30 p-6">
+            {/* Stats row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+              {[
+                { label: 'Games Played', value: gameStats.total, icon: '🎮', color: 'text-violet-600' },
+                { label: 'Correct', value: gameStats.correct, icon: '✅', color: 'text-green-600' },
+                { label: 'Accuracy', value: `${gameStats.accuracy}%`, icon: '🎯', color: 'text-blue-600' },
+                { label: 'Total XP', value: gameStats.totalXP, icon: '⭐', color: 'text-amber-500' },
+              ].map(s => (
+                <div key={s.label} className="text-center p-3 bg-white/40 rounded-2xl">
+                  <div className="text-xl mb-1">{s.icon}</div>
+                  <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            {/* Recent games */}
+            {recentGames.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Recent Games</p>
+                {recentGames.map((g, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/20 last:border-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {g.isCorrect
+                        ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                        : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                      <span className="text-foreground/80 truncate">{g.challenge}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <span className="text-xs text-muted-foreground capitalize">{g.gameType}</span>
+                      <span className="text-xs font-bold text-amber-500 flex items-center gap-0.5">
+                        <Star className="w-3 h-3" />{g.xpEarned}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
       )}
 
       {/* Conversations Section */}
