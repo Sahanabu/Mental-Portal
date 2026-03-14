@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Handle GSAP and Three.js modules
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
   webpack: (config, { isServer }) => {
     // Handle GSAP modules
     config.module.rules.push({
@@ -32,6 +34,10 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.onrender.com',
       },
     ],
   },

@@ -22,7 +22,14 @@ connectDB();
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    /\.vercel\.app$/,
+    process.env.FRONTEND_URL,
+  ].filter(Boolean),
+  credentials: true,
+}));
 
 // Rate limiting
 const limiter = rateLimit({
