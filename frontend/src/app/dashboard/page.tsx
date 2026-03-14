@@ -394,8 +394,8 @@ function DashboardContent() {
       )}
 
       {/* AI Music Therapy — only shown when coming from assessment */}
-      {rawScore && (
-        <MusicTherapySection moodCategory={status} assessmentScore={rawScore} />
+{rawScore && (
+        <MusicTherapySection moodCategory={status} assessmentScore={score} />
       )}
 
       {rawScore && (
