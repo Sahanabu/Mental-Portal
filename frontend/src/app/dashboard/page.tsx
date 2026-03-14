@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { moodAPI, chatAPI, authAPI, dashboardAPI, gameAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { decrypt } from '@/lib/crypto';
-import { CalmBackground, staggerContainer, fadeUp, scaleIn, PulseRing, FloatIcon } from '@/components/CalmBackground';
+import { staggerContainer, fadeUp, scaleIn, PulseRing, FloatIcon } from '@/components/CalmBackground';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -179,7 +179,6 @@ function DashboardContent() {
 
   if (score === null || isLoading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <CalmBackground />
       <motion.div className="flex flex-col items-center gap-4"
         animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}>
         <motion.div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent"
@@ -210,7 +209,6 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)] p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      <CalmBackground />
       {/* User Profile Section */}
       <motion.div
         variants={fadeUp} initial="hidden" animate="show"
@@ -427,7 +425,7 @@ function DashboardContent() {
                 { label: 'Accuracy', value: `${gameStats.accuracy}%`, icon: '🎯', color: 'text-blue-600' },
                 { label: 'Total XP', value: gameStats.totalXP, icon: '⭐', color: 'text-amber-500' },
               ].map(s => (
-                <div key={s.label} className="text-center p-3 bg-white/40 rounded-2xl">
+                <div key={s.label} className="text-center p-3 bg-white/40 dark:bg-white/5 rounded-2xl">
                   <div className="text-xl mb-1">{s.icon}</div>
                   <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>

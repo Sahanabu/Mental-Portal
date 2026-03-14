@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Calendar, TrendingUp, Activity, Sparkles } from 'lucide-react';
 import { assessmentAPI, moodAPI, aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CalmBackground, staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
+import { staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
 
 interface Assessment {
   id: string;
@@ -72,7 +72,6 @@ export default function HistoryPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <CalmBackground />
         <motion.div className="flex flex-col items-center gap-4"
           animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}>
           <motion.div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent"
@@ -85,7 +84,6 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 lg:p-12 max-w-7xl mx-auto pt-20">
-      <CalmBackground />
       <motion.header
         variants={fadeUp} initial="hidden" animate="show"
         className="mb-8">

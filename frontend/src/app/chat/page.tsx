@@ -6,7 +6,6 @@ import { ChatWindow, type Message } from '@/components/ChatWindow';
 import { chatAPI, tokenManager } from '@/services/api';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CalmBackground } from '@/components/CalmBackground';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -86,7 +85,6 @@ export default function ChatPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)] max-w-4xl mx-auto w-full p-4 pt-20 relative">
-      <CalmBackground />
       <motion.div
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}

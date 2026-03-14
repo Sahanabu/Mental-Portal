@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, CloudRain, Waves, Flame, Sparkles } from 'lucide-react';
 import { aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CalmBackground } from '@/components/CalmBackground';
 
 const soundscapes = [
   { id: 'rain', name: 'Gentle Rain', icon: CloudRain, color: 'from-blue-900 to-slate-900', src: '/ambient/gentlerain.mpeg' },
@@ -94,7 +93,6 @@ export default function AmbientPage() {
       <audio ref={audioRef} loop preload="none" />
       {/* Dynamic Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${activeTheme} transition-all duration-[3000ms] -z-20`} />
-      <CalmBackground />
 
       {/* Ambient ripple rings */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">

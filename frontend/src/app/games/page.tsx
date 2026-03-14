@@ -86,9 +86,9 @@ const getGameCategories = (g: any) => [
 ];
 
 const DIFFICULTY_CONFIG = {
-  easy:   { color: 'text-green-600 bg-green-50 border-green-200',   xp: 10,  score: 100 },
-  medium: { color: 'text-yellow-600 bg-yellow-50 border-yellow-200', xp: 20,  score: 200 },
-  hard:   { color: 'text-red-600 bg-red-50 border-red-200',          xp: 35,  score: 350 },
+  easy:   { color: 'text-green-600 bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800',   xp: 10,  score: 100 },
+  medium: { color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/40 border-yellow-200 dark:border-yellow-800', xp: 20,  score: 200 },
+  hard:   { color: 'text-red-600 bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800',          xp: 35,  score: 350 },
 };
 
 // ── Confetti component ─────────────────────────────────────────────────────
@@ -361,7 +361,7 @@ export default function GamesPage() {
                       { label: g.accuracy ?? 'Accuracy', value: `${stats.accuracy}%`, icon: '🎯' },
                       { label: g.totalXP ?? 'Total XP', value: stats.totalXP, icon: '⭐' },
                     ].map(s => (
-                      <div key={s.label} className="text-center p-3 bg-white/40 rounded-2xl">
+                      <div key={s.label} className="text-center p-3 bg-white/40 dark:bg-white/5 rounded-2xl">
                         <div className="text-xl mb-1">{s.icon}</div>
                         <p className="text-lg font-black text-foreground">{s.value}</p>
                         <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -621,11 +621,11 @@ export default function GamesPage() {
                 {challenge.options.map((opt, i) => {
                   const isSelected = selectedAnswer === opt;
                   const isRight = opt === challenge.correctAnswer;
-                  let style = 'border-border/50 bg-white/40 hover:border-primary/50 hover:bg-primary/5 text-foreground';
+                    let style = 'border-border/50 bg-white/40 dark:bg-white/5 hover:border-primary/50 hover:bg-primary/5 text-foreground';
                   if (selectedAnswer) {
-                    if (isRight) style = 'border-green-500 bg-green-50 text-green-700';
-                    else if (isSelected && !isRight) style = 'border-red-400 bg-red-50 text-red-600';
-                    else style = 'border-border/30 bg-white/20 text-muted-foreground opacity-60';
+                    if (isRight) style = 'border-green-500 bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400';
+                    else if (isSelected && !isRight) style = 'border-red-400 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400';
+                    else style = 'border-border/30 bg-white/20 dark:bg-white/5 text-muted-foreground opacity-60';
                   }
 
                   return (

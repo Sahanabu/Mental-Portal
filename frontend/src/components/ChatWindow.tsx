@@ -126,7 +126,7 @@ export function ChatWindow({
               <div className={`p-4 rounded-2xl shadow-sm ${
                 msg.sender === 'user' 
                   ? 'bg-primary text-primary-foreground rounded-tr-sm' 
-                  : 'bg-white/80 border border-white filter backdrop-blur-md rounded-tl-sm text-foreground'
+                  : 'bg-white/80 dark:bg-white/10 border border-white dark:border-white/20 filter backdrop-blur-md rounded-tl-sm text-foreground'
               }`}>
                 <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
               </div>
@@ -143,7 +143,7 @@ export function ChatWindow({
             <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-primary text-primary-foreground">
               <Bot className="w-4 h-4" />
             </div>
-            <div className="p-4 rounded-2xl bg-white/50 border border-white/20 rounded-tl-sm flex items-center gap-2">
+            <div className="p-4 rounded-2xl bg-white/50 dark:bg-white/10 border border-white/20 rounded-tl-sm flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-sm text-muted-foreground font-medium">Aura is typing...</span>
             </div>
@@ -153,12 +153,12 @@ export function ChatWindow({
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSend} className="bg-white/60 backdrop-blur-xl border border-white/40 p-4 shrink-0 rounded-b-3xl shadow-lg flex gap-3 items-end">
+      <form onSubmit={handleSend} className="bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 p-4 shrink-0 rounded-b-3xl shadow-lg flex gap-3 items-end">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type how you're feeling..."
-          className="flex-1 bg-white/50 border border-border/50 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none max-h-32 text-foreground font-medium placeholder:text-muted-foreground"
+          className="flex-1 bg-white/50 dark:bg-white/5 border border-border/50 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none max-h-32 text-foreground font-medium placeholder:text-muted-foreground"
           rows={1}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {

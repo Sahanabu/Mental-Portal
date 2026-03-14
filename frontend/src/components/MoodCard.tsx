@@ -31,7 +31,7 @@ export function MoodCard({
         "flex flex-col items-center p-6 rounded-[2rem] border-2 transition-all group",
         isSelected 
           ? `border-transparent bg-gradient-to-tr ${color} text-white shadow-xl scale-105 ${shadow}` 
-          : 'border-white/30 bg-white/40 hover:bg-white/60 hover:scale-105 text-foreground',
+          : 'border-white/30 bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 text-foreground',
         className
       )}
     >

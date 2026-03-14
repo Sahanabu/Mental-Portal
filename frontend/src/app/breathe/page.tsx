@@ -6,7 +6,7 @@ import { BreathingAnimation } from '@/components/BreathingAnimation';
 import { aiAPI } from '@/services/api';
 import { Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CalmBackground, PulseRing, FloatIcon } from '@/components/CalmBackground';
+import { PulseRing, FloatIcon } from '@/components/CalmBackground';
 
 export default function BreathePage() {
   const [isActive, setIsActive] = useState(false);
@@ -34,7 +34,6 @@ export default function BreathePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-background p-4">
-      <CalmBackground />
 
       {/* Ambient ripple rings always visible */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

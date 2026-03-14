@@ -13,7 +13,7 @@ import { aiAPI, interactionsAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useExerciseStore, Exercise } from '@/lib/exerciseStore';
 import { encrypt } from '@/lib/crypto';
-import { CalmBackground, staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
+import { staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
 
 const moods = [
   { id: 'happy',   emoji: '😊', label: 'Happy',   color: 'from-green-400 to-emerald-500', shadow: 'shadow-green-500/30' },
@@ -103,7 +103,6 @@ export default function CheckinPage() {
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] sm:min-h-screen flex flex-col items-center justify-start p-4 relative overflow-hidden">
-      <CalmBackground />
       {notification && (
         <motion.div
           initial={{ opacity: 0, y: -16 }}
@@ -111,8 +110,8 @@ export default function CheckinPage() {
           exit={{ opacity: 0, y: -16 }}
           className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl border text-sm font-medium ${
             notification.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-700'
-              : 'bg-blue-50 border-blue-200 text-blue-700'
+              ? 'bg-red-50 dark:bg-red-950/60 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+              : 'bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400'
           }`}
         >
           <AlertCircle className="w-4 h-4 shrink-0" />

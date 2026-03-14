@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CalmBackground, staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
+import { staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
 
 const localResources = [
   {
@@ -66,7 +66,6 @@ export default function ResourcesPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] p-6 md:p-12 max-w-7xl mx-auto pt-20">
-      <CalmBackground />
       <motion.header
         variants={fadeUp} initial="hidden" animate="show"
         className="mb-16 text-center max-w-3xl mx-auto">
@@ -102,7 +101,7 @@ export default function ResourcesPage() {
               whileHover={{ y: -8, scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
               className={`glass p-8 rounded-[2.5rem] border hover:shadow-2xl transition-all duration-300 group ${
-                resource.urgent ? 'border-red-200 bg-red-50/50' : 'border-white/40'
+                resource.urgent ? 'border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20' : 'border-white/40'
               }`}
             >
               <div className="flex items-start gap-6">
@@ -124,7 +123,7 @@ export default function ResourcesPage() {
                   </div>
                   
                   {resource.phone && (
-                    <div className="inline-flex items-center gap-2 bg-white/60 px-4 py-2 rounded-xl text-foreground font-bold shadow-sm border border-white/40">
+                    <div className="inline-flex items-center gap-2 bg-white/60 dark:bg-white/10 px-4 py-2 rounded-xl text-foreground font-bold shadow-sm border border-white/40">
                       <Phone className="w-4 h-4" /> {resource.phone}
                     </div>
                   )}
