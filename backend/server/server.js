@@ -25,19 +25,41 @@ connectDB().catch((error) => {
   console.log('📡 Server continuing without full DB for health/monitoring');
 });
 
-// CORS first so every response (including errors) gets CORS headers
+// Allowed origins (must match frontend deploy URL)
 const allowedOrigins = [
   'http://localhost:3000',
   'https://mentalportal.netlify.app',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (/\.netlify\.app$/.test(origin) || /\.vercel\.app$/.test(origin)) return true;
+  return false;
+}
+
+// Explicit preflight handler – must run first so preflight always gets CORS headers (fixes Render CORS)
+app.use((req, res, next) => {
+  if (req.method !== 'OPTIONS') return next();
+  const origin = req.headers.origin;
+  if (!isOriginAllowed(origin)) {
+    console.log('[CORS] Preflight rejected origin:', origin);
+    return res.sendStatus(403);
+  }
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  return res.sendStatus(204);
+});
+
+// CORS for non-OPTIONS requests
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. Postman, same-origin)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    if (/\.netlify\.app$/.test(origin) || /\.vercel\.app$/.test(origin)) return callback(null, true);
+    if (isOriginAllowed(origin)) return callback(null, true);
     console.log('[CORS] Rejected origin:', origin);
     callback(null, false);
   },
