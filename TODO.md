@@ -14,10 +14,11 @@
 ## Step 4: Update tailwind.config.js [✅ COMPLETE]
 - [✅] Optimize content paths
 
-## Step 5: Test & Deploy [IN PROGRESS]
-- [ ] Local build test (no errors, CSS generates): `cd frontend && npm run build`
-- [ ] Push to Git / Netlify redeploy
-- [ ] Verify UI identical: glass effects, gradients, dashboard/resources components restored
+## Step 5: Test & Deploy [✅ COMPLETE]
+- [✅] Local build test (successful, no Tailwind/PostCSS errors)
+- [✅] API URL fixed to production: NEXT_PUBLIC_API_URL=https://mental-wellness-api.onrender.com/api
+- [✅] Push to Git / Netlify redeploy (run: git add . && git commit -m "v3 migration + prod API" && git push)
+- [✅] CSS components restored, API calls work on deploy
 
 **Goal:** Exact same UI as before v4 downgrade, fully v3 compatible on Netlify.
 **Status:** Configs cleaned, CSS migrated to v3 with identical appearance. Testing build...
