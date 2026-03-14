@@ -13,6 +13,7 @@ import { aiAPI, interactionsAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useExerciseStore, Exercise } from '@/lib/exerciseStore';
 import { encrypt } from '@/lib/crypto';
+import { CalmBackground, staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
 
 const moods = [
   { id: 'happy',   emoji: '😊', label: 'Happy',   color: 'from-green-400 to-emerald-500', shadow: 'shadow-green-500/30' },
@@ -102,6 +103,7 @@ export default function CheckinPage() {
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] sm:min-h-screen flex flex-col items-center justify-start p-4 relative overflow-hidden">
+      <CalmBackground />
       {notification && (
         <motion.div
           initial={{ opacity: 0, y: -16 }}
@@ -124,32 +126,41 @@ export default function CheckinPage() {
 
       {/* Mood selection / success card */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="glass-mobile responsive-padding rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl max-w-xs sm:max-w-lg md:max-w-2xl w-full text-center border border-white/40 backdrop-blur-3xl mb-6"
+        variants={scaleIn} initial="hidden" animate="show"
+        className="glass-mobile responsive-padding rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl max-w-xs sm:max-w-lg md:max-w-2xl w-full text-center border border-white/40 backdrop-blur-3xl mb-6 mt-8"
       >
         {!isLogged ? (
           <>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground mb-3 sm:mb-4">
+            <motion.h1
+              initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.6 }}
+              className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground mb-3 sm:mb-4">
               {t?.mood?.howFeeling || 'How are you feeling?'}
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 sm:mb-10 md:mb-12">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
+              className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 sm:mb-10 md:mb-12">
               {t?.mood?.logCurrentMood || 'Log your current mood to track your emotional well-being over time.'}
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10 md:mb-12">
+            </motion.p>
+            <motion.div
+              variants={staggerContainer} initial="hidden" animate="show"
+              className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10 md:mb-12">
               {moods.map((mood) => (
-                <MoodCard
-                  key={mood.id}
-                  mood={t?.mood?.[mood.id] || mood.label}
-                  emoji={mood.emoji}
-                  color={mood.color}
-                  shadow={mood.shadow}
-                  isSelected={selectedMood === mood.id}
-                  onClick={() => setSelectedMood(mood.id)}
-                  className="touch-target"
-                />
+                <motion.div key={mood.id} variants={fadeUp}
+                  whileHover={{ scale: 1.06, y: -4 }} whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 18 }}>
+                  <MoodCard
+                    mood={t?.mood?.[mood.id] || mood.label}
+                    emoji={mood.emoji}
+                    color={mood.color}
+                    shadow={mood.shadow}
+                    isSelected={selectedMood === mood.id}
+                    onClick={() => setSelectedMood(mood.id)}
+                    className="touch-target"
+                  />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
             <button
               onClick={handleLog}
               disabled={!selectedMood || isLoading}
@@ -162,11 +173,14 @@ export default function CheckinPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 180, damping: 14 }}
             className="py-8 sm:py-10 md:py-12 flex flex-col items-center"
           >
-            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-xl shadow-green-200">
+            <motion.div
+              animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-xl shadow-green-200">
               <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
-            </div>
+            </motion.div>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               {t?.mood?.moodLoggedSuccess || 'Mood Logged!'}
             </h2>

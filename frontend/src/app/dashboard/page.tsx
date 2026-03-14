@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { moodAPI, chatAPI, authAPI, dashboardAPI, gameAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { decrypt } from '@/lib/crypto';
+import { CalmBackground, staggerContainer, fadeUp, scaleIn, PulseRing, FloatIcon } from '@/components/CalmBackground';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -176,7 +177,17 @@ function DashboardContent() {
     }
   };
 
-  if (score === null || isLoading) return <div className="min-h-screen flex items-center justify-center">{t?.dashboard?.loadingDashboard || 'Loading dashboard...'}</div>;
+  if (score === null || isLoading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <CalmBackground />
+      <motion.div className="flex flex-col items-center gap-4"
+        animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}>
+        <motion.div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent"
+          animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
+        <p className="text-muted-foreground font-medium">{t?.dashboard?.loadingDashboard || 'Loading dashboard...'}</p>
+      </motion.div>
+    </div>
+  );
 
   // Derive status
   let status = "Minimal";
@@ -199,15 +210,17 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)] p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+      <CalmBackground />
       {/* User Profile Section */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={fadeUp} initial="hidden" animate="show"
         className="glass-mobile p-6 rounded-2xl flex items-center gap-4 border-2 border-primary/20"
       >
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-          <User className="w-8 h-8 text-primary" />
-        </div>
+        <FloatIcon>
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <User className="w-8 h-8 text-primary" />
+          </div>
+        </FloatIcon>
         {localStorage.getItem('token') ? (
           <div className="flex-1">
             <h2 className="text-xl font-bold">{userName || 'Welcome'}</h2>
@@ -227,7 +240,7 @@ function DashboardContent() {
 
       {/* Live DB stats */}
       {dbStats && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        <motion.div variants={staggerContainer} initial="hidden" animate="show"
           className="grid grid-cols-3 gap-3"
         >
           {[
@@ -235,10 +248,14 @@ function DashboardContent() {
             { label: 'Mood Logs', value: dbStats.totalMoodLogs, color: 'text-teal-600' },
             { label: 'Interactions', value: dbStats.totalInteractions, color: 'text-purple-600' },
           ].map(stat => (
-            <div key={stat.label} className="glass-mobile p-4 rounded-2xl text-center border border-white/30">
-              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+            <motion.div key={stat.label} variants={fadeUp} className="glass-mobile p-4 rounded-2xl text-center border border-white/30">
+              <motion.p className={`text-2xl font-black ${stat.color}`}
+                initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 12 }}>
+                {stat.value}
+              </motion.p>
               <p className="text-xs text-muted-foreground font-medium mt-0.5">{stat.label}</p>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       )}
@@ -269,9 +286,7 @@ function DashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Score Card */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          variants={scaleIn} initial="hidden" animate="show"
           className="col-span-1 glass-mobile p-6 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center space-y-4 shadow-xl relative overflow-hidden"
         >
           <div className="absolute -top-16 -right-16 w-32 h-32 sm:w-48 sm:h-48 bg-primary/20 rounded-full blur-3xl"></div>
@@ -279,13 +294,20 @@ function DashboardContent() {
           <h2 className="text-sm sm:text-base font-bold text-foreground/80 uppercase tracking-widest flex items-center gap-2">
             <Target className="w-4 h-4" /> {t?.dashboard?.currentStatus || 'Current Status'}
           </h2>
-          <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center bg-gradient-to-tr ${colorClass} shadow-2xl relative`}>
-            <div className="w-[85%] h-[85%] bg-background rounded-full flex flex-col items-center justify-center">
-               <span className="text-4xl sm:text-5xl font-black text-foreground">
-                 {score}
-               </span>
-               <span className="text-xs uppercase font-bold text-muted-foreground">/ 27</span>
-            </div>
+          <div className="relative flex items-center justify-center">
+            <PulseRing color={`bg-gradient-to-tr ${colorClass} opacity-20`} size="w-36 h-36 sm:w-44 sm:h-44" />
+            <motion.div
+              className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full flex items-center justify-center bg-gradient-to-tr ${colorClass} shadow-2xl relative z-10`}
+              animate={{ scale: [1, 1.03, 1] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
+              <div className="w-[85%] h-[85%] bg-background rounded-full flex flex-col items-center justify-center">
+                <motion.span className="text-4xl sm:text-5xl font-black text-foreground"
+                  initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 180, damping: 10, delay: 0.3 }}>
+                  {score}
+                </motion.span>
+                <span className="text-xs uppercase font-bold text-muted-foreground">/ 27</span>
+              </div>
+            </motion.div>
           </div>
           <p className={`text-xl sm:text-2xl font-black uppercase tracking-wider bg-clip-text text-transparent bg-gradient-to-r ${colorClass}`}>
             {status}
@@ -297,9 +319,7 @@ function DashboardContent() {
 
         {/* Weekly Trend Chart */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          variants={fadeUp} initial="hidden" animate="show"
           className="col-span-1 lg:col-span-2 glass-mobile p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl relative overflow-hidden flex flex-col"
         >
            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
@@ -317,9 +337,7 @@ function DashboardContent() {
 
       {/* Suggested Actions */}
       <motion.div 
-         initial={{ opacity: 0, y: 20 }}
-         animate={{ opacity: 1, y: 0 }}
-         transition={{ duration: 0.5, delay: 0.2 }}
+         variants={staggerContainer} initial="hidden" animate="show"
          className="mt-4"
       >
         <div className="flex items-center justify-between mb-6">
@@ -351,27 +369,24 @@ function DashboardContent() {
         ) : null}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link href="/breathe" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
-             <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-               <HeartPulse className="w-6 h-6" />
-             </div>
-             <h3 className="text-base sm:text-lg font-bold mb-2">{t?.dashboard?.guidedBreathing || 'Guided Breathing'}</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground">{t?.dashboard?.guidedBreathingDesc || 'Take a 3-minute breather to lower anxiety and center your mind.'}</p>
-          </Link>
-          <a href="/chat" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
-             <div className="bg-purple-100 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-               <Brain className="w-6 h-6" />
-             </div>
-             <h3 className="text-base sm:text-lg font-bold mb-2">{t?.dashboard?.aiCompanion || 'AI Companion'}</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground">{t?.dashboard?.aiCompanionDesc || 'Chat out your feelings in a safe, judgment-free space.'}</p>
-          </a>
-          <Link href="/checkin" className="glass-mobile p-6 rounded-2xl hover:-translate-y-1 transition-all cursor-pointer group block">
-             <div className="bg-orange-100 text-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-               <List className="w-6 h-6" />
-             </div>
-             <h3 className="text-base sm:text-lg font-bold mb-2">{t?.dashboard?.dailyCheckin || 'Daily Check-In'}</h3>
-             <p className="text-xs sm:text-sm text-muted-foreground">{t?.dashboard?.dailyCheckinDesc || 'Log your current mood to keep your weekly tracking accurate.'}</p>
-          </Link>
+          {[
+            { href: '/breathe', bg: 'bg-blue-100', text: 'text-blue-600', Icon: HeartPulse, title: t?.dashboard?.guidedBreathing || 'Guided Breathing', desc: t?.dashboard?.guidedBreathingDesc || 'Take a 3-minute breather to lower anxiety and center your mind.' },
+            { href: '/chat',    bg: 'bg-purple-100', text: 'text-purple-600', Icon: Brain,     title: t?.dashboard?.aiCompanion || 'AI Companion',      desc: t?.dashboard?.aiCompanionDesc || 'Chat out your feelings in a safe, judgment-free space.' },
+            { href: '/checkin', bg: 'bg-orange-100', text: 'text-orange-600', Icon: List,      title: t?.dashboard?.dailyCheckin || 'Daily Check-In',   desc: t?.dashboard?.dailyCheckinDesc || 'Log your current mood to keep your weekly tracking accurate.' },
+          ].map(({ href, bg, text, Icon, title, desc }, i) => (
+            <motion.div key={href} variants={fadeUp}
+              whileHover={{ y: -6, scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+              <Link href={href} className="glass-mobile p-6 rounded-2xl cursor-pointer group block h-full">
+                <motion.div className={`${bg} ${text} w-12 h-12 rounded-2xl flex items-center justify-center mb-4`}
+                  whileHover={{ rotate: [0, -8, 8, 0] }} transition={{ duration: 0.4 }}>
+                  <Icon className="w-6 h-6" />
+                </motion.div>
+                <h3 className="text-base sm:text-lg font-bold mb-2">{title}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">{desc}</p>
+              </Link>
+            </motion.div>
+          ))}
         </div>
       </motion.div>
 

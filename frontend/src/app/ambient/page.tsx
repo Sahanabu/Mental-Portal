@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, CloudRain, Waves, Flame, Sparkles } from 'lucide-react';
 import { aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CalmBackground } from '@/components/CalmBackground';
 
 const soundscapes = [
   { id: 'rain', name: 'Gentle Rain', icon: CloudRain, color: 'from-blue-900 to-slate-900', src: '/ambient/gentlerain.mpeg' },
@@ -93,7 +94,20 @@ export default function AmbientPage() {
       <audio ref={audioRef} loop preload="none" />
       {/* Dynamic Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${activeTheme} transition-all duration-[3000ms] -z-20`} />
-      
+      <CalmBackground />
+
+      {/* Ambient ripple rings */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        {[1,2,3,4,5].map(i => (
+          <motion.div key={i}
+            className="absolute rounded-full border border-white/10"
+            style={{ width: i * 180, height: i * 180 }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.05, 0.2] }}
+            transition={{ duration: 6 + i * 1.2, delay: i * 1, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        ))}
+      </div>
+
       {isPlaying && (
         <motion.div 
           initial={{ opacity: 0 }}
@@ -139,7 +153,11 @@ export default function AmbientPage() {
                       : 'bg-white/5 border-transparent hover:bg-white/10'
                   }`}
                 >
-                  <Icon className={`w-8 h-8 mb-3 ${isActive ? 'text-white drop-shadow-md' : 'text-white/50'}`} />
+                  <motion.div
+                    animate={isActive && isPlaying ? { rotate: [0, 10, -10, 0], scale: [1, 1.15, 1] } : {}}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
+                    <Icon className={`w-8 h-8 mb-3 ${isActive ? 'text-white drop-shadow-md' : 'text-white/50'}`} />
+                  </motion.div>
                   <span className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-white/50'}`}>{sound.name}</span>
                 </button>
               );

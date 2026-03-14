@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Calendar, TrendingUp, Activity, Sparkles } from 'lucide-react';
 import { assessmentAPI, moodAPI, aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CalmBackground, staggerContainer, fadeUp, scaleIn } from '@/components/CalmBackground';
 
 interface Assessment {
   id: string;
@@ -71,24 +72,30 @@ export default function HistoryPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <CalmBackground />
+        <motion.div className="flex flex-col items-center gap-4"
+          animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }}>
+          <motion.div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent"
+            animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
           <p className="text-muted-foreground">{t?.history?.loadingHistory || 'Loading your assessment history...'}</p>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8 lg:p-12 max-w-7xl mx-auto pt-20">
-      <header className="mb-8">
+      <CalmBackground />
+      <motion.header
+        variants={fadeUp} initial="hidden" animate="show"
+        className="mb-8">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
           {t?.history?.title || 'Assessment History'}
         </h1>
         <p className="text-muted-foreground text-base sm:text-lg">
           {t?.history?.subtitle || 'Track your mental wellness journey over time'}
         </p>
-      </header>
+      </motion.header>
 
       {assessments.length === 0 ? (
         <motion.div
@@ -114,18 +121,22 @@ export default function HistoryPage() {
             {assessments.map((assessment, index) => (
               <motion.div
                 key={assessment.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-mobile responsive-padding rounded-2xl sm:rounded-3xl hover:shadow-xl transition-shadow"
+                variants={fadeUp} initial="hidden" animate="show"
+                transition={{ delay: index * 0.07 }}
+                whileHover={{ x: 6, scale: 1.01 }}
+                className="glass-mobile responsive-padding rounded-2xl sm:rounded-3xl hover:shadow-xl transition-shadow cursor-default"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center bg-gradient-to-tr ${getCategoryColor(assessment.category)} shadow-lg flex-shrink-0`}>
-                      <span className="text-2xl sm:text-3xl font-black text-white">
+                    <motion.div
+                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center bg-gradient-to-tr ${getCategoryColor(assessment.category)} shadow-lg flex-shrink-0`}
+                      whileHover={{ rotate: [0, -5, 5, 0] }} transition={{ duration: 0.4 }}>
+                      <motion.span className="text-2xl sm:text-3xl font-black text-white"
+                        initial={{ scale: 0 }} animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 12, delay: index * 0.07 + 0.2 }}>
                         {assessment.score}
-                      </span>
-                    </div>
+                      </motion.span>
+                    </motion.div>
                     <div>
                       <h3 className={`text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${getCategoryColor(assessment.category)}`}>
                         {assessment.category}
