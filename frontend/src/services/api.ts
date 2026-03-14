@@ -127,13 +127,13 @@ export const gameAPI = {
   generateSession: (data: { gameType: string; difficulty: string; count: number }) =>
     api.post('/games/session/generate', data),
   saveSession: (data: {
-    gameType: string; difficulty: string; questions: {
-      question: string; options: string[]; correctAnswer: string; userAnswer: string;
-    }[];
+    gameType: string; difficulty: string;
+    challenge?: string; options?: string[]; correctAnswer?: string; userAnswer?: string;
+    questions?: { question: string; options: string[]; correctAnswer: string; userAnswer: string }[];
   }) => api.post('/games/session/save', data),
   getUserSessions: (userId: string) =>
     api.get(`/games/sessions/${userId}`),
-  getLeaderboard: (params?: { gameType?: string; difficulty?: string; limit?: number }) =>
+  getLeaderboard: (params?: { gameType?: string; difficulty?: string; page?: number; pageSize?: number }) =>
     api.get('/games/leaderboard', { params }),
 };
 

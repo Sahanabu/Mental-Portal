@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Zap, Hash, Type, Layers, Trophy, Star, RotateCcw, ChevronRight, Lock, CheckCircle2, XCircle, Loader2, TrendingUp, Target, Award } from 'lucide-react';
+import { Brain, Zap, Hash, Type, Layers, Trophy, Star, RotateCcw, ChevronRight, Lock, CheckCircle2, XCircle, Loader2, TrendingUp, Target, Award, Medal, ChevronLeft, Users } from 'lucide-react';
 import { gameAPI } from '@/services/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -22,6 +22,8 @@ interface Challenge {
 }
 
 interface GameStats { total: number; correct: number; accuracy: number; totalXP: number; }
+interface LeaderboardEntry { userId: string; username: string; bestScore: number; totalXP: number; gamesPlayed: number; accuracy: number; }
+interface LeaderboardPagination { page: number; pageSize: number; total: number; totalPages: number; }
 
 // ── Game category config ───────────────────────────────────────────────────
 const GAME_CATEGORIES = [
@@ -90,16 +92,23 @@ const DIFFICULTY_CONFIG = {
 
 // ── Confetti component ─────────────────────────────────────────────────────
 function Confetti() {
-  const pieces = Array.from({ length: 24 }, (_, i) => i);
   const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+  const pieces = useState(() =>
+    Array.from({ length: 24 }, (_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      duration: 2 + Math.random() * 1.5,
+      delay: Math.random() * 0.5,
+    }))
+  )[0];
   return (
     <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
-      {pieces.map(i => (
-        <motion.div key={i}
+      {pieces.map(p => (
+        <motion.div key={p.id}
           className="absolute w-3 h-3 rounded-sm"
-          style={{ backgroundColor: colors[i % colors.length], left: `${Math.random() * 100}%`, top: '-10px' }}
+          style={{ backgroundColor: colors[p.id % colors.length], left: p.left, top: '-10px' }}
           animate={{ y: ['0vh', '110vh'], rotate: [0, 720], opacity: [1, 0] }}
-          transition={{ duration: 2 + Math.random() * 1.5, delay: Math.random() * 0.5, ease: 'easeIn' }}
+          transition={{ duration: p.duration, delay: p.delay, ease: 'easeIn' }}
         />
       ))}
     </div>
@@ -124,9 +133,19 @@ export default function GamesPage() {
   const [sessionScore, setSessionScore] = useState(0);
   const [sessionXP, setSessionXP] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [lbPagination, setLbPagination] = useState<LeaderboardPagination | null>(null);
+  const [lbPage, setLbPage] = useState(1);
+  const [lbLoading, setLbLoading] = useState(false);
+  const PAGE_SIZE = 50;
 
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-  const isLoggedIn = typeof window !== 'undefined' ? !!localStorage.getItem('token') : false;
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setUserId(localStorage.getItem('userId'));
+    setIsLoggedIn(!!localStorage.getItem('token'));
+  }, []);
 
   // Load user stats on mount
   useEffect(() => {
@@ -138,6 +157,21 @@ export default function GamesPage() {
       })
       .catch(() => {});
   }, [userId, isLoggedIn]);
+
+  // Load leaderboard
+  const loadLeaderboard = useCallback((page: number) => {
+    setLbLoading(true);
+    gameAPI.getLeaderboard({ page, pageSize: PAGE_SIZE })
+      .then(res => {
+        setLeaderboard(res.data.leaderboard);
+        setLbPagination(res.data.pagination);
+        setLbPage(page);
+      })
+      .catch(() => {})
+      .finally(() => setLbLoading(false));
+  }, []);
+
+  useEffect(() => { loadLeaderboard(1); }, [loadLeaderboard]);
 
   const startGame = useCallback(async (type: GameType, diff: Difficulty) => {
     setSelectedType(type);
@@ -193,16 +227,24 @@ export default function GamesPage() {
     if (isLoggedIn) {
       gameAPI.saveSession({
         gameType: selectedType,
+        difficulty,
         challenge: challenge.question,
         options: challenge.options,
         correctAnswer: challenge.correctAnswer,
         userAnswer: answer,
-        difficulty: diff,
+      }).then(() => {
+        // Refresh stats after save
+        if (userId) {
+          gameAPI.getUserSessions(userId)
+            .then(res => { setStats(res.data.stats); setRecentGames(res.data.sessions.slice(0, 5)); })
+            .catch(() => {});
+        }
+        loadLeaderboard(lbPage);
       }).catch(() => {});
     }
 
     setTimeout(() => setPhase('result'), 800);
-  }, [challenge, selectedAnswer, difficulty, selectedType, isLoggedIn]);
+  }, [challenge, selectedAnswer, difficulty, selectedType, isLoggedIn, userId, loadLeaderboard, lbPage]);
 
   const playAgain = () => startGame(selectedType, difficulty);
   const backToHub = () => { setPhase('hub'); setChallenge(null); setSelectedAnswer(null); setIsCorrect(null); };
@@ -326,27 +368,108 @@ export default function GamesPage() {
                     <div className="mt-4 pt-4 border-t border-border/30">
                       <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Recent Games</p>
                       <div className="space-y-2">
-                        {recentGames.map((g, i) => (
-                          <div key={i} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              {g.isCorrect
-                                ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
-                              <span className="text-foreground/80 truncate max-w-[200px]">{g.challenge}</span>
+                        {recentGames.map((g, i) => {
+                          const firstQ = g.questions?.[0];
+                          return (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                {g.correctCount > 0
+                                  ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                  : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                                <span className="text-foreground/80 truncate max-w-[200px]">
+                                  {firstQ?.question ?? g.gameType}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className={`text-xs px-2 py-0.5 rounded-full border ${DIFFICULTY_CONFIG[g.difficulty as Difficulty]?.color || ''}`}>
+                                  {g.difficulty}
+                                </span>
+                                <span className="text-xs font-bold text-amber-500">+{g.totalXP} XP</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className={`text-xs px-2 py-0.5 rounded-full border ${DIFFICULTY_CONFIG[g.difficulty as Difficulty]?.color || ''}`}>
-                                {g.difficulty}
-                              </span>
-                              <span className="text-xs font-bold text-amber-500">+{g.xpEarned} XP</span>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
                 </motion.div>
               )}
+
+              {/* Leaderboard */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+                className="glass rounded-3xl border border-white/30 p-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Medal className="w-4 h-4 text-amber-500" />
+                    <h2 className="font-bold text-foreground">Leaderboard</h2>
+                    {lbPagination && lbPagination.total > 0 && (
+                      <span className="text-xs text-muted-foreground bg-white/40 border border-border/30 rounded-full px-2 py-0.5">
+                        {(lbPage - 1) * PAGE_SIZE + 1}–{Math.min(lbPage * PAGE_SIZE, lbPagination.total)} of {lbPagination.total}
+                      </span>
+                    )}
+                  </div>
+                  {lbPagination && lbPagination.totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        disabled={lbPage <= 1 || lbLoading}
+                        onClick={() => loadLeaderboard(lbPage - 1)}
+                        className="w-7 h-7 rounded-full border border-border/50 bg-white/40 flex items-center justify-center disabled:opacity-30 hover:bg-white/60 transition-colors">
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-xs text-muted-foreground px-1">{lbPage}/{lbPagination.totalPages}</span>
+                      <button
+                        disabled={lbPage >= lbPagination.totalPages || lbLoading}
+                        onClick={() => loadLeaderboard(lbPage + 1)}
+                        className="w-7 h-7 rounded-full border border-border/50 bg-white/40 flex items-center justify-center disabled:opacity-30 hover:bg-white/60 transition-colors">
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {lbLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : leaderboard.length === 0 ? (
+                  <div className="text-center py-8 text-sm text-muted-foreground">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    No games played yet. Be the first!
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {leaderboard.map((entry, i) => {
+                      const rank = (lbPage - 1) * PAGE_SIZE + i + 1;
+                      const isMe = userId && entry.userId?.toString() === userId;
+                      const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+                      return (
+                        <motion.div key={entry.userId}
+                          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.025 }}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors ${
+                            isMe ? 'bg-primary/10 border-primary/30' : 'bg-white/30 border-border/20 hover:bg-white/50'
+                          }`}>
+                          <div className="w-8 text-center shrink-0">
+                            {medal
+                              ? <span className="text-lg">{medal}</span>
+                              : <span className="text-xs font-black text-muted-foreground">#{rank}</span>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold truncate ${isMe ? 'text-primary' : 'text-foreground'}`}>
+                              {entry.username}{isMe && <span className="text-xs font-normal ml-1 text-primary/70">(you)</span>}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{entry.gamesPlayed} games · {entry.accuracy}% acc</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-black text-foreground">{entry.bestScore.toLocaleString()}</p>
+                            <p className="text-xs text-amber-500 font-bold">⭐ {entry.totalXP} XP</p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
 
               {!isLoggedIn && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}

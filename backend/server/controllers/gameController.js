@@ -115,18 +115,23 @@ ${memoryExtra}`;
   }
 };
 
-// POST /api/games/session/save  (auth required)
+// POST /api/games/session/save  (auth required) — accepts array OR single question
 exports.saveSession = async (req, res) => {
   try {
-    const { gameType, difficulty, questions } = req.body;
-    // questions: [{ question, options, correctAnswer, userAnswer }]
-    if (!Array.isArray(questions) || questions.length === 0) {
-      return res.status(400).json({ error: 'questions array required' });
+    const { gameType, difficulty, questions, challenge, correctAnswer, userAnswer, options } = req.body;
+
+    // Normalise: single-question payload → wrap in array
+    let qs = Array.isArray(questions) && questions.length > 0
+      ? questions
+      : [{ question: challenge, options: options || [], correctAnswer, userAnswer }];
+
+    if (!qs[0]?.question && !qs[0]?.correctAnswer) {
+      return res.status(400).json({ error: 'question data required' });
     }
 
     const diff = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'medium';
-    const scored = questions.map(q => {
-      const isCorrect = q.userAnswer?.trim().toLowerCase() === q.correctAnswer?.trim().toLowerCase();
+    const scored = qs.map(q => {
+      const isCorrect = (q.userAnswer ?? '').trim().toLowerCase() === (q.correctAnswer ?? '').trim().toLowerCase();
       return { ...q, isCorrect };
     });
 
@@ -135,7 +140,6 @@ exports.saveSession = async (req, res) => {
     const totalScore   = correctCount * (DIFFICULTY_SCORE[diff] ?? 200);
     const totalXP      = correctCount * (DIFFICULTY_XP[diff] ?? 20) + Math.floor((totalCount - correctCount) * 2);
 
-    // Get username for leaderboard
     let username = 'Anonymous';
     try {
       const user = await User.findById(req.userId).select('username name').lean();
@@ -185,38 +189,48 @@ exports.getUserSessions = async (req, res) => {
   }
 };
 
-// GET /api/games/leaderboard  (public)
+// GET /api/games/leaderboard  (public) — paginated, page=1&pageSize=50
 exports.getLeaderboard = async (req, res) => {
   try {
-    const { gameType, difficulty, limit = 10 } = req.query;
+    const { gameType, difficulty, page = 1, pageSize = 50 } = req.query;
+    const pg   = Math.max(1, parseInt(page));
+    const size = Math.min(100, Math.max(1, parseInt(pageSize)));
+    const skip = (pg - 1) * size;
+
     const match = { completed: true };
-    if (gameType) match.gameType = gameType;
+    if (gameType)   match.gameType   = gameType;
     if (difficulty) match.difficulty = difficulty;
 
-    // Aggregate best score per user
+    // Total distinct users for pagination metadata
+    const totalUsers = await GameSession.distinct('userId', match).then(a => a.length);
+
     const leaderboard = await GameSession.aggregate([
       { $match: match },
-      { $sort: { totalScore: -1 } },
       {
         $group: {
           _id: '$userId',
-          username:   { $first: '$username' },
-          bestScore:  { $max: '$totalScore' },
-          totalXP:    { $sum: '$totalXP' },
-          gamesPlayed:{ $sum: 1 },
-          bestAccuracy: {
-            $max: {
-              $cond: [
-                { $gt: ['$totalCount', 0] },
-                { $multiply: [{ $divide: ['$correctCount', '$totalCount'] }, 100] },
-                0
-              ]
-            }
+          username:    { $first: '$username' },
+          bestScore:   { $max: '$totalScore' },
+          totalXP:     { $sum: '$totalXP' },
+          gamesPlayed: { $sum: 1 },
+          totalCorrect:{ $sum: '$correctCount' },
+          totalAnswered:{ $sum: '$totalCount' },
+        }
+      },
+      {
+        $addFields: {
+          accuracy: {
+            $cond: [
+              { $gt: ['$totalAnswered', 0] },
+              { $round: [{ $multiply: [{ $divide: ['$totalCorrect', '$totalAnswered'] }, 100] }, 0] },
+              0
+            ]
           }
         }
       },
-      { $sort: { bestScore: -1 } },
-      { $limit: parseInt(limit) },
+      { $sort: { bestScore: -1, totalXP: -1 } },
+      { $skip: skip },
+      { $limit: size },
       {
         $project: {
           _id: 0,
@@ -225,12 +239,15 @@ exports.getLeaderboard = async (req, res) => {
           bestScore: 1,
           totalXP: 1,
           gamesPlayed: 1,
-          bestAccuracy: { $round: ['$bestAccuracy', 0] },
+          accuracy: 1,
         }
       }
     ]);
 
-    res.json({ leaderboard });
+    res.json({
+      leaderboard,
+      pagination: { page: pg, pageSize: size, total: totalUsers, totalPages: Math.ceil(totalUsers / size) },
+    });
   } catch (err) {
     console.error('leaderboard error:', err.message);
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
