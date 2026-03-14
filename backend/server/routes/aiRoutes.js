@@ -12,5 +12,6 @@ router.post('/history-analysis', auth, aiController.getHistoryAnalysis);
 router.post('/generate-exercises', auth, aiController.generateExercises);
 router.post('/video-recommendations', auth, aiController.generateVideoRecommendations);
 router.post('/music-recommendations', auth, aiController.generateMusicRecommendations);
+router.post('/movie-suggestions', auth, aiController.generateMovieSuggestions);
 
 module.exports = router;

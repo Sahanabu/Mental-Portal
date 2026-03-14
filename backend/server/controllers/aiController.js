@@ -70,11 +70,25 @@ Provide a short, calming message (max 80 words) to help them relax in this ambie
 
 exports.getResourceRecommendations = async (req, res) => {
   try {
-    const { userConcerns, assessmentScore, language = 'en' } = req.body;
+    const { language = 'en' } = req.body;
+    const Assessment = require('../models/Assessment');
+    const MoodLog = require('../models/MoodLog');
 
-    const prompt = `You are a mental health resource advisor. The user has concerns about: "${userConcerns || 'general wellness'}" and their recent assessment score is ${assessmentScore || 'not provided'}.
+    const [latestAssessment, recentMoods] = await Promise.all([
+      Assessment.findOne({ userId: req.userId }).sort({ createdAt: -1 }),
+      MoodLog.find({ userId: req.userId }).sort({ createdAt: -1 }).limit(7)
+    ]);
 
-Recommend 3 specific types of resources or support they should explore (max 120 words). Be practical and supportive.`;
+    const scoreInfo = latestAssessment
+      ? `latest assessment score ${latestAssessment.score} (${latestAssessment.category})`
+      : 'no assessment taken yet';
+    const moodInfo = recentMoods.length
+      ? `recent moods: ${recentMoods.map(m => m.mood).join(', ')}`
+      : 'no mood logs yet';
+
+    const prompt = `You are a mental health resource advisor. This specific user has: ${scoreInfo}. Their ${moodInfo}.
+
+Based on their actual data, recommend 3 specific, personalised resources or actions they should explore right now (max 120 words). Be direct, practical, and tailored to their exact situation — not generic advice.`;
 
     const aiMessage = await getAIResponse(prompt, language);
 
@@ -92,16 +106,25 @@ Recommend 3 specific types of resources or support they should explore (max 120 
 exports.getCheckinInsights = async (req, res) => {
   try {
     const { mood, recentMoods, language = 'en' } = req.body;
+    const Interaction = require('../models/Interaction');
 
     const prompt = `You are a mood tracking wellness coach. The user just logged their mood as "${mood}". Their recent mood pattern is: ${recentMoods?.join(', ') || 'not available'}.
 
 Provide a brief, encouraging insight about their mood pattern (max 80 words). Be supportive and offer one actionable tip.`;
 
     const aiMessage = await getAIResponse(prompt, language);
+    const insight = aiMessage || "Thank you for checking in. Tracking your mood helps you understand patterns. If you're feeling low, try a short walk or reach out to someone you trust.";
 
-    res.json({
-      insight: aiMessage || "Thank you for checking in. Tracking your mood helps you understand patterns. If you're feeling low, try a short walk or reach out to someone you trust."
-    });
+    // Store as interaction record (plaintext insight — encrypted payload handled client-side)
+    if (req.userId) {
+      Interaction.create({
+        userId: req.userId,
+        type: 'checkin',
+        encryptedPayload: JSON.stringify({ mood, insight, recentMoods, date: new Date().toISOString() })
+      }).catch(() => {});
+    }
+
+    res.json({ insight });
   } catch (error) {
     console.error('AI checkin insights error:', error.message);
     res.json({
@@ -137,6 +160,7 @@ Provide a brief, encouraging analysis of their progress (max 100 words). Highlig
 exports.generateExercises = async (req, res) => {
   try {
     const { mood, language = 'en' } = req.body;
+    const Recommendation = require('../models/Recommendation');
 
     const prompt = `User mood: ${mood}
 
@@ -169,6 +193,11 @@ Return ONLY valid JSON array:
 
     if (!exercises || !Array.isArray(exercises)) {
       exercises = getFallbackExercises(mood);
+    }
+
+    // Save to Recommendation collection
+    if (req.userId) {
+      Recommendation.create({ userId: req.userId, type: 'exercise', mood, items: exercises }).catch(() => {});
     }
 
     res.json({ exercises });
@@ -217,32 +246,38 @@ const getFallbackExercises = (mood) => {
 
 exports.generateMusicRecommendations = async (req, res) => {
   try {
-    const { moodCategory, language = 'en' } = req.body;
+    const { moodCategory, language = 'en', assessmentScore } = req.body;
     const grok = require('./grokController');
+    const Recommendation = require('../models/Recommendation');
 
     const langLabel = language === 'hi' ? 'Hindi' : language === 'kn' ? 'Kannada' : 'English';
+    const scoreContext = assessmentScore != null ? `Assessment score: ${assessmentScore}.` : '';
 
-    const prompt = `User mental wellness category: ${moodCategory}
-Preferred language: ${langLabel}
+    const prompt = `You are a music therapist. ${scoreContext} User mood/state: "${moodCategory}". Preferred language: ${langLabel}.
 
-Suggest 3 music tracks that help improve mood.
+Suggest exactly 3 real, well-known music tracks that genuinely help with this specific mood.
 Language rules:
-Hindi -> artists like Arijit Singh, Sonu Nigam, Shreya Ghoshal
-Kannada -> artists like Vijay Prakash, Sonu Nigam Kannada songs, Armaan Malik Kannada songs
-English -> artists like Ed Sheeran, Coldplay, relaxing instrumental artists
+- Hindi: artists like Arijit Singh, Sonu Nigam, Shreya Ghoshal, A.R. Rahman
+- Kannada: artists like Vijay Prakash, Rajesh Krishnan, Sonu Nigam
+- English: artists like Ed Sheeran, Coldplay, Adele, Pharrell Williams, Marconi Union
 
-Return ONLY valid JSON array:
-[{"title":"Song title","artist":"Artist name","youtubeSearch":"Song title artist official video","language":"${langLabel}","moodType":"relaxing|uplifting|calming|motivating"}]`;
+Return ONLY a valid JSON array, no explanation:
+[{"title":"Song title","artist":"Artist name","deezerQuery":"Song title Artist name","language":"${langLabel}","moodType":"relaxing|uplifting|calming|motivating"}]`;
 
     let tracks = null;
     try {
-      const aiText = await grok.chat(prompt);
+      const aiText = await grok.chatJSON(prompt);
       const match = aiText.match(/\[[\s\S]*\]/);
       if (match) tracks = JSON.parse(match[0]);
     } catch (e) { tracks = null; }
 
     if (!tracks || !Array.isArray(tracks) || tracks.length === 0) {
       tracks = getMusicFallback(moodCategory, language);
+    }
+
+    // Save to Recommendation collection
+    if (req.userId) {
+      Recommendation.create({ userId: req.userId, type: 'music', mood: moodCategory, items: tracks }).catch(() => {});
     }
 
     res.json({ tracks });
@@ -256,36 +291,105 @@ const getMusicFallback = (moodCategory, language = 'en') => {
   const cat = (moodCategory || '').toLowerCase();
   if (language === 'hi') {
     return [
-      { title: 'Tum Hi Ho', artist: 'Arijit Singh', youtubeSearch: 'Tum Hi Ho Arijit Singh official video', language: 'Hindi', moodType: 'calming' },
-      { title: 'Kal Ho Naa Ho', artist: 'Sonu Nigam', youtubeSearch: 'Kal Ho Naa Ho Sonu Nigam official video', language: 'Hindi', moodType: 'uplifting' },
-      { title: 'Lag Ja Gale', artist: 'Shreya Ghoshal', youtubeSearch: 'Lag Ja Gale Shreya Ghoshal official video', language: 'Hindi', moodType: 'relaxing' },
+      { title: 'Tum Hi Ho', artist: 'Arijit Singh', deezerQuery: 'Tum Hi Ho Arijit Singh', language: 'Hindi', moodType: 'calming' },
+      { title: 'Kal Ho Naa Ho', artist: 'Sonu Nigam', deezerQuery: 'Kal Ho Naa Ho Sonu Nigam', language: 'Hindi', moodType: 'uplifting' },
+      { title: 'Lag Ja Gale', artist: 'Shreya Ghoshal', deezerQuery: 'Lag Ja Gale Shreya Ghoshal', language: 'Hindi', moodType: 'relaxing' },
     ];
   }
   if (language === 'kn') {
     return [
-      { title: 'Ninna Nenapu', artist: 'Vijay Prakash', youtubeSearch: 'Ninna Nenapu Vijay Prakash Kannada official video', language: 'Kannada', moodType: 'calming' },
-      { title: 'Ee Hrudaya', artist: 'Armaan Malik', youtubeSearch: 'Ee Hrudaya Armaan Malik Kannada official video', language: 'Kannada', moodType: 'uplifting' },
-      { title: 'Bombe Helutaite', artist: 'Vijay Prakash', youtubeSearch: 'Bombe Helutaite Vijay Prakash official video', language: 'Kannada', moodType: 'relaxing' },
+      { title: 'Ninna Nenapu', artist: 'Vijay Prakash', deezerQuery: 'Ninna Nenapu Vijay Prakash', language: 'Kannada', moodType: 'calming' },
+      { title: 'Ee Hrudaya', artist: 'Vijay Prakash', deezerQuery: 'Ee Hrudaya Kannada', language: 'Kannada', moodType: 'uplifting' },
+      { title: 'Bombe Helutaite', artist: 'Vijay Prakash', deezerQuery: 'Bombe Helutaite Vijay Prakash', language: 'Kannada', moodType: 'relaxing' },
     ];
   }
-  // English — vary by category
   if (cat.includes('severe') || cat.includes('moderate')) {
     return [
-      { title: 'Fix You', artist: 'Coldplay', youtubeSearch: 'Fix You Coldplay official video', language: 'English', moodType: 'calming' },
-      { title: 'The Scientist', artist: 'Coldplay', youtubeSearch: 'The Scientist Coldplay official video', language: 'English', moodType: 'relaxing' },
-      { title: 'Weightless', artist: 'Marconi Union', youtubeSearch: 'Weightless Marconi Union official', language: 'English', moodType: 'calming' },
+      { title: 'Fix You', artist: 'Coldplay', deezerQuery: 'Fix You Coldplay', language: 'English', moodType: 'calming' },
+      { title: 'The Scientist', artist: 'Coldplay', deezerQuery: 'The Scientist Coldplay', language: 'English', moodType: 'relaxing' },
+      { title: 'Weightless', artist: 'Marconi Union', deezerQuery: 'Weightless Marconi Union', language: 'English', moodType: 'calming' },
     ];
   }
   return [
-    { title: 'Perfect', artist: 'Ed Sheeran', youtubeSearch: 'Perfect Ed Sheeran official video', language: 'English', moodType: 'uplifting' },
-    { title: 'Happy', artist: 'Pharrell Williams', youtubeSearch: 'Happy Pharrell Williams official video', language: 'English', moodType: 'uplifting' },
-    { title: 'Viva La Vida', artist: 'Coldplay', youtubeSearch: 'Viva La Vida Coldplay official video', language: 'English', moodType: 'motivating' },
+    { title: 'Perfect', artist: 'Ed Sheeran', deezerQuery: 'Perfect Ed Sheeran', language: 'English', moodType: 'uplifting' },
+    { title: 'Happy', artist: 'Pharrell Williams', deezerQuery: 'Happy Pharrell Williams', language: 'English', moodType: 'uplifting' },
+    { title: 'Viva La Vida', artist: 'Coldplay', deezerQuery: 'Viva La Vida Coldplay', language: 'English', moodType: 'motivating' },
+  ];
+};
+
+exports.generateMovieSuggestions = async (req, res) => {
+  try {
+    const { mood, language = 'en' } = req.body;
+    const grok = require('./grokController');
+    const Recommendation = require('../models/Recommendation');
+
+    const langLabel = language === 'hi' ? 'Hindi' : language === 'kn' ? 'Kannada' : 'English';
+
+    const prompt = `You are a movie therapist. User mood/state: "${mood}". Preferred language: ${langLabel}.
+
+Suggest exactly 4 real, well-known movies that will make anyone smile, laugh, or feel motivated — universally loved feel-good films.
+Language rules:
+- Hindi: Bollywood feel-good films (e.g. 3 Idiots, Munna Bhai, Dil Chahta Hai, PK, Taare Zameen Par)
+- Kannada: Kannada feel-good films (e.g. Mungaru Male, Kirik Party, Lucia, Ulidavaru Kandanthe)
+- English: Hollywood feel-good films (e.g. The Pursuit of Happyness, Good Will Hunting, Soul, Up, Forrest Gump)
+
+For each movie provide a real IMDB ID (starts with tt followed by digits).
+
+Return ONLY valid JSON array, no explanation:
+[{"title":"Movie title","year":"2023","genre":"Comedy|Drama","imdbId":"tt1234567","reason":"One sentence why this helps the mood","language":"${langLabel}"}]`;
+
+    let movies = null;
+    try {
+      const aiText = await grok.chatJSON(prompt);
+      const match = aiText.match(/\[[\s\S]*\]/);
+      if (match) movies = JSON.parse(match[0]);
+    } catch (e) { movies = null; }
+
+    if (!movies || !Array.isArray(movies) || movies.length === 0) {
+      movies = getMovieFallback(mood, language);
+    }
+
+    // Save to Recommendation collection
+    if (req.userId) {
+      Recommendation.create({ userId: req.userId, type: 'movie', mood, items: movies }).catch(() => {});
+    }
+
+    res.json({ movies });
+  } catch (error) {
+    console.error('Movie suggestions error:', error.message);
+    res.json({ movies: getMovieFallback(req.body.mood, req.body.language) });
+  }
+};
+
+const getMovieFallback = (mood, language = 'en') => {
+  if (language === 'hi') {
+    return [
+      { title: '3 Idiots', year: '2009', genre: 'Comedy/Drama', imdbId: 'tt1187043', reason: 'Hilarious and deeply inspiring — will make you laugh and rethink life.', language: 'Hindi' },
+      { title: 'Munna Bhai M.B.B.S.', year: '2003', genre: 'Comedy/Drama', imdbId: 'tt0374887', reason: 'Warm-hearted comedy that spreads joy and positivity.', language: 'Hindi' },
+      { title: 'PK', year: '2014', genre: 'Comedy/Drama', imdbId: 'tt2338151', reason: 'Funny and thought-provoking — guaranteed to bring a smile.', language: 'Hindi' },
+      { title: 'Dil Chahta Hai', year: '2001', genre: 'Comedy/Drama', imdbId: 'tt0292490', reason: 'A feel-good friendship story full of laughter and heart.', language: 'Hindi' },
+    ];
+  }
+  if (language === 'kn') {
+    return [
+      { title: 'Kirik Party', year: '2016', genre: 'Comedy/Drama', imdbId: 'tt6016436', reason: 'Energetic college comedy that will have you laughing throughout.', language: 'Kannada' },
+      { title: 'Mungaru Male', year: '2006', genre: 'Romance/Drama', imdbId: 'tt0839588', reason: 'A beloved feel-good classic that warms the heart.', language: 'Kannada' },
+      { title: '3 Idiots', year: '2009', genre: 'Comedy/Drama', imdbId: 'tt1187043', reason: 'Universally loved — funny and uplifting for everyone.', language: 'Hindi' },
+      { title: 'Soul', year: '2020', genre: 'Animation/Drama', imdbId: 'tt2948372', reason: 'A beautiful Pixar film about finding joy in everyday life.', language: 'English' },
+    ];
+  }
+  return [
+    { title: 'The Pursuit of Happyness', year: '2006', genre: 'Drama', imdbId: 'tt0454921', reason: 'An incredibly moving story of resilience that will inspire you deeply.', language: 'English' },
+    { title: 'Soul', year: '2020', genre: 'Animation/Drama', imdbId: 'tt2948372', reason: 'A beautiful Pixar film about finding joy and purpose in life.', language: 'English' },
+    { title: 'Good Will Hunting', year: '1997', genre: 'Drama', imdbId: 'tt0119217', reason: 'Deeply emotional and uplifting — a masterpiece about human potential.', language: 'English' },
+    { title: 'Forrest Gump', year: '1994', genre: 'Drama/Comedy', imdbId: 'tt0109830', reason: 'Timeless, heartwarming, and guaranteed to make you smile.', language: 'English' },
   ];
 };
 
 exports.generateVideoRecommendations = async (req, res) => {
   try {
     const { category, score, language = 'en' } = req.body;
+    const Recommendation = require('../models/Recommendation');
 
     const prompt = `User mental wellness score category: ${category} (score: ${score})
 
@@ -307,6 +411,11 @@ Return ONLY valid JSON array:
 
     if (!videos || !Array.isArray(videos) || videos.length === 0) {
       videos = getFallbackVideos(category);
+    }
+
+    // Save to Recommendation collection
+    if (req.userId) {
+      Recommendation.create({ userId: req.userId, type: 'video', mood: category, items: videos }).catch(() => {});
     }
 
     res.json({ videos });

@@ -6,7 +6,7 @@ import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
 
 function MindParticles() {
-  const count = 3000;
+  const count = typeof window !== 'undefined' && window.innerWidth < 640 ? 800 : 3000;
   const mesh = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 

@@ -11,7 +11,7 @@ exports.chat = async (prompt) => {
     console.log('Groq API Key length:', process.env.GROQ_API_KEY?.length);
     
     const completion = await openai.chat.completions.create({
-      model: 'llama-3.1-8b-instant', // Correct Groq model name
+      model: 'llama-3.1-8b-instant',
       messages: [
         {
           role: "system",
@@ -32,6 +32,22 @@ exports.chat = async (prompt) => {
     console.error('Error response:', error.response?.data);
     throw error;
   }
+};
+
+exports.chatJSON = async (prompt, maxTokens = 600) => {
+  const completion = await openai.chat.completions.create({
+    model: 'llama-3.1-8b-instant',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a JSON data generator. Always respond with only valid JSON, no markdown, no explanation, no extra text.'
+      },
+      { role: 'user', content: prompt }
+    ],
+    max_tokens: maxTokens,
+    temperature: 0.8
+  });
+  return completion.choices[0].message.content;
 };
 
 exports.generateQuestions = async () => {

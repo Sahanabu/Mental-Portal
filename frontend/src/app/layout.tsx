@@ -31,7 +31,7 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen ambient-gradient-bg flex flex-col`} suppressHydrationWarning>
         <LanguageProvider>
           <Navbar />
-          <main className="flex-1 pt-14 sm:pt-16 pb-8 sm:pb-12 relative overflow-auto">
+          <main className="flex-1 pt-14 sm:pt-16 relative overflow-auto">
             {children}
           </main>
           <Footer />

@@ -7,9 +7,11 @@ import { Activity, Brain, HeartPulse, List, Target, TrendingUp, User, MessageSqu
 import { MoodChart } from '@/components/MoodChart';
 import { RecoveryVideoSection } from '@/components/RecoveryVideoSection';
 import { MusicTherapySection } from '@/components/MusicTherapySection';
+import { MovieSuggestionSection } from '@/components/MovieSuggestionSection';
 import Link from 'next/link';
-import { moodAPI, chatAPI, authAPI } from '@/services/api';
+import { moodAPI, chatAPI, authAPI, dashboardAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { decrypt } from '@/lib/crypto';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -18,11 +20,14 @@ function DashboardContent() {
   const [score, setScore] = useState<number | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [scoreTrend, setScoreTrend] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
   const [conversations, setConversations] = useState<any[]>([]);
   const [showConversations, setShowConversations] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [dbStats, setDbStats] = useState<{ totalAssessments: number; totalMoodLogs: number; totalInteractions: number } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -57,10 +62,36 @@ function DashboardContent() {
         if (stored) {
           const data = JSON.parse(stored);
           setRecommendations(data.recommendations || []);
+          setAiSummary(data.summary || '');
         }
-      } else {
-        setScore(4);
       }
+
+      // Pull from new dashboard API if authenticated
+      const userId = localStorage.getItem('userId');
+      let resolvedScore = rawScore ? parseInt(rawScore, 10) : null;
+      if (userId && token) {
+        try {
+          const dash = await dashboardAPI.get(userId);
+          const d = dash.data;
+          if (!rawScore && d.summary.latestScore !== null) {
+            resolvedScore = d.summary.latestScore;
+            setScore(d.summary.latestScore);
+          }
+          if (d.summary.latestRecommendations?.length) setRecommendations(d.summary.latestRecommendations);
+          if (d.summary.latestSummary) setAiSummary(d.summary.latestSummary);
+          if (d.moodTrend?.length) {
+            setWeeklyData(d.moodTrend.map((m: any) => ({ name: m.date, mood: m.score })));
+          }
+          if (d.scoreTrend?.length) setScoreTrend(d.scoreTrend);
+          setDbStats({
+            totalAssessments: d.summary.totalAssessments || 0,
+            totalMoodLogs: d.summary.totalMoodLogs || 0,
+            totalInteractions: d.summary.totalInteractions || 0
+          });
+        } catch { /* fallback below */ }
+      }
+
+      if (resolvedScore === null) setScore(4);
 
       // Fetch mood data
       try {
@@ -180,7 +211,48 @@ function DashboardContent() {
         <p className="text-muted-foreground text-sm sm:text-base">{t?.dashboard?.snapshot || 'Here is a snapshot of your recent assessment and mood trends.'}</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      {/* Live DB stats */}
+      {dbStats && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="grid grid-cols-3 gap-3"
+        >
+          {[
+            { label: 'Assessments', value: dbStats.totalAssessments, color: 'text-primary' },
+            { label: 'Mood Logs', value: dbStats.totalMoodLogs, color: 'text-teal-600' },
+            { label: 'Interactions', value: dbStats.totalInteractions, color: 'text-purple-600' },
+          ].map(stat => (
+            <div key={stat.label} className="glass-mobile p-4 rounded-2xl text-center border border-white/30">
+              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">{stat.label}</p>
+            </div>
+          ))}
+        </motion.div>
+      )}
+
+        {aiSummary && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+            className="glass-mobile p-5 rounded-2xl border border-primary/20 flex gap-3 items-start"
+          >
+            <Brain className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">AI Assessment Summary</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{aiSummary}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {scoreTrend.length > 1 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+            className="glass-mobile p-6 rounded-2xl border border-white/30"
+          >
+            <h2 className="text-sm font-bold text-foreground/80 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <TrendingUp className="w-4 h-4" /> Assessment Score Trend
+            </h2>
+            <MoodChart data={scoreTrend.map(s => ({ name: s.date, mood: s.score }))} type="line" height={180} />
+          </motion.div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Score Card */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -296,7 +368,11 @@ function DashboardContent() {
 
       {/* AI Music Therapy — only shown when coming from assessment */}
       {rawScore && (
-        <MusicTherapySection moodCategory={status} />
+        <MusicTherapySection moodCategory={status} assessmentScore={rawScore} />
+      )}
+
+      {rawScore && (
+        <MovieSuggestionSection mood={status} />
       )}
 
       {/* Conversations Section */}

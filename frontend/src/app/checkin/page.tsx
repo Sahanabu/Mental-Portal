@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Sparkles, Dumbbell } from 'lucide-react';
+import { CheckCircle2, Sparkles, Dumbbell, AlertCircle, X } from 'lucide-react';
 import { MoodCard } from '@/components/MoodCard';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { RecoveryVideoSection } from '@/components/RecoveryVideoSection';
 import { MusicTherapySection } from '@/components/MusicTherapySection';
+import { MovieSuggestionSection } from '@/components/MovieSuggestionSection';
 import { useMood } from '@/hooks/useMood';
-import { aiAPI } from '@/services/api';
+import { aiAPI, interactionsAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useExerciseStore, Exercise } from '@/lib/exerciseStore';
+import { encrypt } from '@/lib/crypto';
 
 const moods = [
   { id: 'happy',   emoji: '😊', label: 'Happy',   color: 'from-green-400 to-emerald-500', shadow: 'shadow-green-500/30' },
@@ -37,6 +39,12 @@ export default function CheckinPage() {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [isGeneratingExercises, setIsGeneratingExercises] = useState(false);
   const [videoCategory, setVideoCategory] = useState<string>('');
+  const [notification, setNotification] = useState<{ message: string; type: 'error' | 'info' } | null>(null);
+
+  const notify = (message: string, type: 'error' | 'info' = 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
   const { logMood, isLoading, fetchMoodHistory, moodHistory } = useMood();
   const { t, language } = useLanguage();
   const { exercises, setExercises } = useExerciseStore();
@@ -44,11 +52,26 @@ export default function CheckinPage() {
   const handleLog = async () => {
     if (!selectedMood) return;
 
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    if (!userId || !token) {
+      notify('Please log in to track your mood.', 'error');
+      return;
+    }
+
     const result = await logMood(selectedMood);
     if (result.success) {
       setIsLogged(true);
       setVideoCategory(MOOD_TO_CATEGORY[selectedMood] || 'Mild');
       fetchMoodHistory();
+
+      // Encrypt and store checkin interaction
+      if (userId) {
+        try {
+          const encrypted = await encrypt(userId, { type: 'checkin', mood: selectedMood, date: new Date().toISOString() });
+          await interactionsAPI.save({ type: 'checkin', encryptedPayload: encrypted });
+        } catch { /* non-blocking */ }
+      }
 
       // AI insight
       try {
@@ -69,8 +92,8 @@ export default function CheckinPage() {
           status: 'pending' as const,
         }));
         setExercises(generatedExercises);
-      } catch (error) {
-        console.error('Exercise generation error:', error);
+      } catch {
+        notify('Could not generate exercises. Please try again.', 'info');
       } finally {
         setIsGeneratingExercises(false);
       }
@@ -79,6 +102,24 @@ export default function CheckinPage() {
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] sm:min-h-screen flex flex-col items-center justify-start p-4 relative overflow-hidden">
+      {notification && (
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -16 }}
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl border text-sm font-medium ${
+            notification.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : 'bg-blue-50 border-blue-200 text-blue-700'
+          }`}
+        >
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{notification.message}</span>
+          <button onClick={() => setNotification(null)} className="ml-1 hover:opacity-70">
+            <X className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
       <div className="absolute top-0 right-0 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 bg-primary/20 rounded-full blur-[80px] sm:blur-[100px] md:blur-[120px] -z-10 mix-blend-multiply" />
 
       {/* Mood selection / success card */}
@@ -198,6 +239,10 @@ export default function CheckinPage() {
           {/* AI Music Therapy — shown after mood is logged */}
           {selectedMood && (
             <MusicTherapySection state={selectedMood} moodCategory={videoCategory || selectedMood} />
+          )}
+
+          {selectedMood && (
+            <MovieSuggestionSection mood={selectedMood} />
           )}
         </motion.div>
       )}

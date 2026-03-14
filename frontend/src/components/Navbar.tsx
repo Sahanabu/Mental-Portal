@@ -47,8 +47,8 @@ export function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="font-bold text-lg sm:text-xl tracking-tight text-primary flex items-center gap-2">
           <Brain className="responsive-icon" />
-          <span className="hidden xs:inline">Mentalport</span>
-          <span className="xs:hidden">MP</span>
+          <span className="hidden min-[480px]:inline">Mentalport</span>
+          <span className="min-[480px]:hidden">MP</span>
         </Link>
         
         {/* Desktop Navigation */}

@@ -11,6 +11,8 @@ const moodRoutes = require('./routes/moodRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const resourcesRoutes = require('./routes/resourcesRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const adaptiveAssessmentRoutes = require('./routes/adaptiveAssessmentRoutes');
+const dataRoutes = require('./routes/dataRoutes');
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use('/api/mood', moodRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/resources', resourcesRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ai-assessment', adaptiveAssessmentRoutes);
+app.use('/api', dataRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

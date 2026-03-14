@@ -90,8 +90,34 @@ export const aiAPI = {
     api.post('/ai/generate-exercises', data),
   generateVideoRecommendations: (data: { category: string; score: number; language?: string }) =>
     api.post('/ai/video-recommendations', data),
-  generateMusicRecommendations: (data: { moodCategory: string; language?: string }) =>
+  generateMusicRecommendations: (data: { moodCategory: string; language?: string; assessmentScore?: number }) =>
     api.post('/ai/music-recommendations', data),
+  generateMovieSuggestions: (data: { mood: string; language?: string }) =>
+    api.post('/ai/movie-suggestions', data),
+};
+
+// Adaptive AI Assessment API
+export const adaptiveAssessmentAPI = {
+  start: (data: { language?: string }) =>
+    api.post('/ai-assessment/start', data),
+  respond: (data: { sessionId: string; message?: string; language?: string; phase?: string; predefinedAnswers?: number[] }) =>
+    api.post('/ai-assessment/respond', data),
+  getSessions: () =>
+    api.get('/ai-assessment/sessions'),
+};
+
+// Interactions API (encrypted payloads)
+export const interactionsAPI = {
+  save: (data: { type: string; encryptedPayload: string }) =>
+    api.post('/interactions/save', data),
+  getForUser: (userId: string, type?: string) =>
+    api.get(`/interactions/user/${userId}`, { params: type ? { type } : {} }),
+};
+
+// Dashboard API
+export const dashboardAPI = {
+  get: (userId: string) =>
+    api.get(`/dashboard/user/${userId}`),
 };
 
 // Token management

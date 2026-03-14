@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Mic, MicOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Message {
@@ -12,20 +12,30 @@ export interface Message {
   timestamp?: Date;
 }
 
+const LANG_MAP: Record<string, string> = {
+  en: 'en-US',
+  hi: 'hi-IN',
+  kn: 'kn-IN',
+};
+
 interface ChatWindowProps {
   messages: Message[];
   onSendMessage: (message: string) => void;
   isTyping?: boolean;
   className?: string;
+  language?: string;
 }
 
 export function ChatWindow({ 
   messages, 
   onSendMessage, 
   isTyping = false, 
-  className 
+  className,
+  language = 'en',
 }: ChatWindowProps) {
   const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -36,10 +46,46 @@ export function ChatWindow({
     scrollToBottom();
   }, [messages, isTyping]);
 
+  // Stop recognition when language changes
+  useEffect(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+    }
+  }, [language]);
+
+  const toggleVoice = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = LANG_MAP[language] || 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => { setIsListening(false); recognitionRef.current = null; };
+    recognition.onerror = () => { setIsListening(false); recognitionRef.current = null; };
+    recognition.onresult = (e: any) => {
+      const transcript = Array.from(e.results)
+        .map((r: any) => r[0].transcript)
+        .join('');
+      setInput(transcript);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
     onSendMessage(input);
     setInput('');
   };
@@ -121,6 +167,19 @@ export function ChatWindow({
             }
           }}
         />
+        <button
+          type="button"
+          onClick={toggleVoice}
+          className={cn(
+            'p-4 rounded-2xl transition-all flex-shrink-0',
+            isListening
+              ? 'bg-red-500 text-white animate-pulse'
+              : 'bg-secondary text-secondary-foreground hover:scale-105'
+          )}
+          title={isListening ? 'Stop listening' : 'Speak'}
+        >
+          {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+        </button>
         <button 
           type="submit" 
           disabled={!input.trim() || isTyping}

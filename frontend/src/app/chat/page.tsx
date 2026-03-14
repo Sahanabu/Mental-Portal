@@ -88,6 +88,7 @@ export default function ChatPage() {
         messages={messages}
         onSendMessage={handleSendMessage}
         isTyping={isTyping}
+        language={language}
       />
     </div>
   );

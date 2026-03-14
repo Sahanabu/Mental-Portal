@@ -1,206 +1,404 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle2, Brain } from 'lucide-react';
-import { AssessmentCard } from '@/components/AssessmentCard';
-import { assessmentAPI } from '@/services/api';
+import { Brain, Send, CheckCircle2, Loader2, Lock, ChevronRight, ChevronLeft } from 'lucide-react';
+import { adaptiveAssessmentAPI, interactionsAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { encrypt } from '@/lib/crypto';
 
-interface Question {
-  id: number;
-  question: string;
-  category?: string;
-}
+interface Question { id: number; text: string; category: string; }
+interface Option { label: string; value: number; }
+interface Message { role: 'user' | 'assistant'; text: string; }
+
+type Phase = 'idle' | 'loading' | 'predefined' | 'followup' | 'done';
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Minimal:  'text-green-600 bg-green-50 border-green-200',
+  Mild:     'text-yellow-600 bg-yellow-50 border-yellow-200',
+  Moderate: 'text-orange-600 bg-orange-50 border-orange-200',
+  Severe:   'text-red-600 bg-red-50 border-red-200',
+};
+
+const SCORE_BAR_COLOR: Record<string, string> = {
+  Minimal:  'bg-green-500',
+  Mild:     'bg-yellow-500',
+  Moderate: 'bg-orange-500',
+  Severe:   'bg-red-500',
+};
 
 export default function AssessmentPage() {
   const router = useRouter();
-  const { t, language } = useLanguage();
+  const { language, t } = useLanguage();
+  const a = t?.assessment;
+
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
-  const [useFallback, setUseFallback] = useState(false);
-  const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
+  const [options, setOptions] = useState<Option[]>([]);
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [currentQ, setCurrentQ] = useState(0);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const [result, setResult] = useState<any>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!t?.assessment?.questions) return;
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sending]);
 
-    const translatedQuestions = (t.assessment.questions || []).map((q: string, i: number) => ({
-      id: i + 1,
-      question: q,
-      category: t?.assessment?.step || 'Step'
-    }));
-    
-    setSessionQuestions(translatedQuestions);
-    setUseFallback(true);
-    setIsLoadingQuestions(false);
-  }, [language, t]);
-
-  const options = [
-    { value: 0, label: t?.assessment?.options?.[0] || "Not at all" },
-    { value: 1, label: t?.assessment?.options?.[1] || "Several days" },
-    { value: 2, label: t?.assessment?.options?.[2] || "More than half the days" },
-    { value: 3, label: t?.assessment?.options?.[3] || "Nearly every day" },
-  ];
-
-  const fallbackQuestions: Question[] = (t?.assessment?.questions || []).map((q: string, i: number) => ({
-    id: i + 1,
-    question: q,
-    category: t?.assessment?.step || 'Step'
-  }));
-
-  const currentQuestions = sessionQuestions;
-  const currentQ = currentQuestions[currentStep] || { id: currentStep + 1, question: 'Loading...', category: '' };
-  const progress = ((currentStep) / currentQuestions.length) * 100;
-
-  const handleOptionSelect = (value: number) => {
-    setAnswers(prev => ({ ...prev, [currentStep]: value }));
-    
-    if (currentStep < currentQuestions.length - 1) {
-      setTimeout(() => setCurrentStep(prev => prev + 1), 400);
-    }
-  };
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    const answersArray = Object.values(answers).map(Number);
-    
+  const startAssessment = async () => {
+    setPhase('loading');
     try {
-      const analysisResponse = await assessmentAPI.analyzeAnswers({
-        answers: answersArray,
-        questions: currentQuestions,
-        language
-      });
-      localStorage.setItem('lastAssessment', JSON.stringify(analysisResponse.data));
-      router.push(`/dashboard?score=${analysisResponse.data.score}`);
-    } catch (error) {
-      console.log('Analysis failed, using simple score');
-      const totalScore = answersArray.reduce((a, b) => a + b, 0);
-      localStorage.setItem('lastAssessment', JSON.stringify({ score: totalScore, category: 'Analyzing...' }));
-      router.push(`/dashboard?score=${totalScore}`);
+      const res = await adaptiveAssessmentAPI.start({ language });
+      setSessionId(res.data.sessionId);
+      setQuestions(res.data.questions);
+      setOptions(res.data.options);
+      setAnswers(new Array(res.data.questions.length).fill(-1));
+      setPhase('predefined');
+    } catch {
+      setPhase('idle');
     }
   };
 
-  if (isLoadingQuestions || !t?.assessment?.questions) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full mx-auto mb-4"
-          />
-          <p>{t?.assessment?.generatingQuestions || 'Generating personalized questions...'}</p>
-          <p className="text-sm text-muted-foreground mt-2">{t?.assessment?.poweredByAI || 'Powered by AI'}</p>
-        </div>
-      </div>
-    );
-  }
+  const selectAnswer = (value: number) => {
+    const updated = [...answers];
+    updated[currentQ] = value;
+    setAnswers(updated);
+  };
+
+  const nextQuestion = () => {
+    if (answers[currentQ] === -1) return;
+    if (currentQ < questions.length - 1) {
+      setCurrentQ(q => q + 1);
+    } else {
+      submitPredefined();
+    }
+  };
+
+  const prevQuestion = () => {
+    if (currentQ > 0) setCurrentQ(q => q - 1);
+  };
+
+  const submitPredefined = async () => {
+    if (!sessionId) return;
+    setPhase('loading');
+    try {
+      const res = await adaptiveAssessmentAPI.respond({
+        sessionId,
+        phase: 'predefined',
+        predefinedAnswers: answers,
+        language,
+      });
+      setMessages([{ role: 'assistant', text: res.data.question }]);
+      setPhase('followup');
+    } catch {
+      setPhase('predefined');
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || sending || !sessionId) return;
+    const userText = input.trim();
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: userText }]);
+    setSending(true);
+
+    try {
+      const res = await adaptiveAssessmentAPI.respond({
+        sessionId,
+        phase: 'followup',
+        message: userText,
+        language,
+      });
+
+      if (res.data.type === 'result') {
+        const r = res.data.result;
+        setResult(r);
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          text: `Assessment complete! Your wellness score is ${r.score}/27 — ${r.category}.\n\n${r.summary}`,
+        }]);
+        setPhase('done');
+
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          try {
+            const encrypted = await encrypt(userId, { type: 'assessment', result: r, sessionId });
+            await interactionsAPI.save({ type: 'assessment', encryptedPayload: encrypted });
+          } catch { /* non-blocking */ }
+        }
+        localStorage.setItem('lastAssessment', JSON.stringify(r));
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', text: res.data.question }]);
+      }
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', text: "Could you tell me more about how this has been affecting you?" }]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const progress = questions.length ? ((currentQ + 1) / questions.length) * 100 : 0;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)] p-4 relative overflow-hidden">
-      {false && useFallback && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-3 bg-yellow-100/80 border border-yellow-300/50 rounded-xl max-w-sm text-xs text-yellow-800"
-        >
-          <Brain className="w-4 h-4 inline mr-1" />
-          {t?.assessment?.usingStandard || 'Using standard questions (AI temporarily unavailable)'}
-        </motion.div>
-      )}
-      
-      <div 
-        className="absolute inset-0 -z-10 transition-colors duration-1000"
-        style={{ 
-          background: `linear-gradient(135deg, 
-            hsl(120, ${60 - currentStep*5}%, ${98 - currentStep*2}%), 
-            hsl(${150 + currentStep*10}, ${40 - currentStep*3}%, ${96 - currentStep*2}%)
-          )` 
-        }}
-      />
+    <div className="flex flex-col items-center justify-start min-h-[calc(100vh-3.5rem)] p-4 pt-8">
+      <div className="w-full max-w-2xl flex flex-col">
 
-      <div className="w-full max-w-sm sm:max-w-lg md:max-w-2xl mb-6 sm:mb-8 space-y-2">
-        <div className="flex justify-between text-xs sm:text-sm font-semibold text-muted-foreground">
-          <span>{t?.assessment?.question || 'Question'} {currentStep + 1} {t?.assessment?.of || 'of'} {currentQuestions.length}</span>
-          <span>{Math.round(progress)}% {t?.assessment?.complete || 'Complete'}</span>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Brain className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold text-foreground">{a?.title || 'AI Wellness Assessment'}</h1>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              <Lock className="w-3 h-3" /> {a?.subtitle || 'Structured · Adaptive · Encrypted'}
+            </p>
+          </div>
         </div>
-        <div className="h-2 w-full bg-white/50 rounded-full overflow-hidden border border-white/20">
-          <motion.div 
-            className="h-full bg-primary"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-          />
-        </div>
-      </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-           key={currentStep}
-           initial={{ opacity: 0, x: 50, scale: 0.95 }}
-           animate={{ opacity: 1, x: 0, scale: 1 }}
-           exit={{ opacity: 0, x: -50, scale: 0.95 }}
-           transition={{ duration: 0.4, ease: "easeOut" }}
-           className="w-full max-w-sm sm:max-w-lg md:max-w-2xl"
-        >
-          <div className="glass-mobile responsive-padding rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-white/40 backdrop-blur-3xl">
-            <span className="inline-block px-3 sm:px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest mb-4 sm:mb-6 flex items-center gap-1">
-              {currentQ.category || `${t?.assessment?.step || 'Step'} ${currentStep + 1}`}
-              {!useFallback && <Brain className="w-3 h-3" />}
-            </span>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-foreground leading-tight mb-6 sm:mb-8 md:mb-10">
-              {currentQ.question}
-            </h2>
+        {/* ── IDLE ── */}
+        {phase === 'idle' && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-3xl border border-white/30 p-10 flex flex-col items-center gap-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Brain className="w-10 h-10 text-primary" />
+            </div>
+            <div className="max-w-sm">
+              <h2 className="text-xl font-bold mb-2">{a?.howItWorks || 'How does it work?'}</h2>
+              <ol className="text-sm text-muted-foreground text-left space-y-2 mt-3">
+                <li className="flex gap-2"><span className="font-bold text-primary">1.</span> {a?.step1 || 'Answer 7 standardized wellness questions (PHQ-9 / GAD-7 style)'}</li>
+                <li className="flex gap-2"><span className="font-bold text-primary">2.</span> {a?.step2 || 'Our AI asks 2–3 follow-up questions to understand your context'}</li>
+                <li className="flex gap-2"><span className="font-bold text-primary">3.</span> {a?.step3 || 'Get a precise score (0–27) with personalized recommendations'}</li>
+              </ol>
+            </div>
+            <button onClick={startAssessment}
+              className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-bold hover:scale-105 transition-transform shadow-lg">
+              {a?.beginAssessment || 'Begin Assessment'}
+            </button>
+          </motion.div>
+        )}
 
-            <div className="space-y-3 sm:space-y-4">
-              {options.map((option) => (
-                <AssessmentCard
-                  key={option.value}
-                  option={option}
-                  isSelected={answers[currentStep] === option.value}
-                  onClick={() => handleOptionSelect(option.value)}
-                  className="touch-target"
-                />
-              ))}
+        {/* ── LOADING ── */}
+        {phase === 'loading' && (
+          <div className="flex items-center justify-center py-32">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          </div>
+        )}
+
+        {/* ── PREDEFINED QUESTIONS ── */}
+        {phase === 'predefined' && questions.length > 0 && (
+          <motion.div key={currentQ} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }} className="flex flex-col gap-5">
+
+            {/* Progress bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <motion.div className="h-full bg-primary rounded-full"
+                  animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium shrink-0">
+                {currentQ + 1} / {questions.length}
+              </span>
             </div>
 
-            <div className="flex justify-between items-center mt-8 sm:mt-10 md:mt-12 pt-4 sm:pt-6 border-t border-border/30">
-              <button
-                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                disabled={currentStep === 0}
-                className="p-2 sm:p-3 rounded-full hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent transition-colors touch-target"
-                aria-label="Previous question"
-              >
-                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
-              </button>
-              
-              {currentStep === currentQuestions.length - 1 ? (
-                <button
-                  onClick={handleSubmit}
-                  disabled={answers[currentStep] === undefined || isSubmitting}
-                  className="px-6 sm:px-8 py-3 bg-primary text-primary-foreground rounded-full text-base sm:text-lg font-bold disabled:opacity-50 hover:scale-105 transition-all flex items-center gap-2 touch-target"
-                >
-                  {isSubmitting ? (t?.assessment?.analyzing || 'AI Analyzing...') : (t?.assessment?.getAnalysis || 'Get AI Analysis')}
-                  {!isSubmitting && <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />}
-                </button>
-              ) : (
-                <button
-                  onClick={() => setCurrentStep(Math.min(currentQuestions.length - 1, currentStep + 1))}
-                  disabled={answers[currentStep] === undefined}
-                  className="p-2 sm:p-3 bg-foreground text-background rounded-full hover:scale-110 disabled:opacity-30 disabled:hover:scale-100 transition-all touch-target"
-                  aria-label="Next question"
-                >
-                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            {/* Category badge */}
+            <div className="glass rounded-3xl border border-white/30 p-6 sm:p-8">
+              <span className="text-xs font-bold text-primary uppercase tracking-widest mb-3 block">
+                {questions[currentQ].category}
+              </span>
+              <p className="text-lg sm:text-xl font-semibold text-foreground leading-relaxed mb-6">
+                {questions[currentQ].text}
+              </p>
+
+              {/* Answer options */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {options.map(opt => (
+                  <button key={opt.value} onClick={() => selectAnswer(opt.value)}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all font-medium text-sm ${
+                      answers[currentQ] === opt.value
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border/50 bg-white/40 hover:border-primary/50 hover:bg-primary/5 text-foreground'
+                    }`}>
+                    <span className={`inline-block w-6 h-6 rounded-full border-2 mr-2 align-middle transition-colors ${
+                      answers[currentQ] === opt.value ? 'border-primary bg-primary' : 'border-muted-foreground'
+                    }`} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex gap-3">
+              {currentQ > 0 && (
+                <button onClick={prevQuestion}
+                  className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-border/50 bg-white/40 text-sm font-medium hover:bg-white/60 transition-colors">
+                  <ChevronLeft className="w-4 h-4" /> {a?.back || 'Back'}
                 </button>
               )}
+              <button onClick={nextQuestion} disabled={answers[currentQ] === -1}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-2xl font-bold text-sm hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:hover:scale-100 shadow-md">
+                {currentQ === questions.length - 1 ? (a?.continueToFollowup || 'Continue to AI Follow-up') : (a?.next || 'Next')}
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
+          </motion.div>
+        )}
+
+        {/* ── AI FOLLOW-UP CHAT ── */}
+        {(phase === 'followup' || phase === 'done') && (
+          <div className="flex flex-col gap-4">
+            {/* Score summary from predefined */}
+            <div className="glass rounded-2xl border border-white/30 p-4 flex items-center gap-4">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">{a?.predefinedScore || 'Predefined Score'}</p>
+                <p className="text-2xl font-black text-primary">
+                  {answers.reduce((s, v) => s + (v >= 0 ? v : 0), 0)}<span className="text-sm text-muted-foreground">/21</span>
+                </p>
+              </div>
+              <div className="flex-1 h-px bg-border" />
+              <p className="text-xs text-muted-foreground max-w-[200px]">
+                {a?.aiFollowupNote || 'AI follow-up adds up to 6 points based on severity context'}
+              </p>
+            </div>
+
+            {/* Chat messages */}
+            <div className="glass rounded-3xl border border-white/30 p-4 overflow-y-auto min-h-[300px] max-h-[50vh] space-y-4 custom-scrollbar">
+              <AnimatePresence initial={false}>
+                {messages.map((msg, i) => (
+                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${
+                      msg.role === 'assistant' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+                    }`}>
+                      {msg.role === 'assistant' ? '🧠' : '👤'}
+                    </div>
+                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                      msg.role === 'assistant'
+                        ? 'bg-white/80 border border-white text-foreground rounded-tl-sm'
+                        : 'bg-primary text-primary-foreground rounded-tr-sm'
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {sending && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm">🧠</div>
+                  <div className="bg-white/80 border border-white p-3 rounded-2xl rounded-tl-sm flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">{a?.analyzing || 'Analyzing...'}</span>
+                  </div>
+                </motion.div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input */}
+            {phase === 'followup' && (
+              <form onSubmit={e => { e.preventDefault(); sendMessage(); }} className="flex gap-3 items-end">
+                <textarea value={input} onChange={e => setInput(e.target.value)}
+                  placeholder={a?.shareFeeling || "Share how you're feeling..."}
+                  rows={2}
+                  className="flex-1 bg-white/60 border border-border/50 rounded-2xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm font-medium"
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                />
+                <button type="submit" disabled={!input.trim() || sending}
+                  className="p-4 bg-primary text-primary-foreground rounded-2xl hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100 shrink-0">
+                  <Send className="w-5 h-5" />
+                </button>
+              </form>
+            )}
+
+            {/* Result card */}
+            {phase === 'done' && result && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                {/* Score card */}
+                <div className="glass rounded-2xl p-6 border border-primary/20">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{a?.finalScore || 'Final Score'}</p>
+                      <p className="text-5xl font-black text-primary">
+                        {result.score}<span className="text-lg text-muted-foreground">/27</span>
+                      </p>
+                    </div>
+                    <div className="text-center flex flex-col items-center justify-center">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">{a?.category || 'Category'}</p>
+                      <span className={`px-4 py-2 rounded-full border font-bold text-sm ${CATEGORY_COLORS[result.category] || ''}`}>
+                        {result.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Score bar */}
+                  <div className="h-3 bg-muted rounded-full overflow-hidden mb-2">
+                    <motion.div
+                      className={`h-full rounded-full ${SCORE_BAR_COLOR[result.category] || 'bg-primary'}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(result.score / 27) * 100}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>0 Minimal</span><span>7 Mild</span><span>14 Moderate</span><span>20 Severe</span>
+                  </div>
+                </div>
+
+                {/* Score breakdown */}
+                <div className="glass rounded-2xl p-4 border border-white/30">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">{a?.scoreBreakdown || 'Score Breakdown'}</p>
+                  <div className="flex gap-4 text-sm">
+                    <div className="flex-1 text-center p-3 bg-white/40 rounded-xl">
+                      <p className="text-muted-foreground text-xs mb-1">{a?.predefined7q || 'Predefined (7 Qs)'}</p>
+                      <p className="font-black text-lg text-foreground">
+                        {result.predefinedAnswers?.reduce((s: number, v: number) => s + v, 0) ?? '—'}<span className="text-xs text-muted-foreground">/21</span>
+                      </p>
+                    </div>
+                    <div className="flex-1 text-center p-3 bg-white/40 rounded-xl">
+                      <p className="text-muted-foreground text-xs mb-1">{a?.aiFollowup || 'AI Follow-up'}</p>
+                      <p className="font-black text-lg text-foreground">
+                        +{result.followUpBonus ?? 0}<span className="text-xs text-muted-foreground">/6</span>
+                      </p>
+                    </div>
+                    <div className="flex-1 text-center p-3 bg-primary/10 rounded-xl border border-primary/20">
+                      <p className="text-primary text-xs mb-1 font-bold">{a?.total || 'Total'}</p>
+                      <p className="font-black text-lg text-primary">
+                        {result.score}<span className="text-xs text-muted-foreground">/27</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {result.recommendations?.length > 0 && (
+                  <div className="glass rounded-2xl p-4 border border-white/30">
+                    <p className="text-sm font-bold text-primary mb-2">{a?.recommendations || 'Recommendations'}</p>
+                    <ul className="space-y-1">
+                      {result.recommendations.map((r: string, i: number) => (
+                        <li key={i} className="text-sm text-foreground/80 flex gap-2">
+                          <span className="text-primary shrink-0">✓</span>{r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <button onClick={() => router.push(`/dashboard?score=${result.score}`)}
+                  className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 shadow-lg">
+                  <CheckCircle2 className="w-5 h-5" /> {a?.viewDashboard || 'View Full Dashboard'}
+                </button>
+              </motion.div>
+            )}
           </div>
-        </motion.div>
-      </AnimatePresence>
+        )}
+      </div>
     </div>
   );
 }

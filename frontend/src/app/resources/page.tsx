@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { aiAPI } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ExercisesSection } from '@/components/ExercisesSection';
 
 const localResources = [
   {
@@ -33,7 +32,7 @@ const localResources = [
     titleKey: 'therapistFinder',
     description: 'Find a licensed therapist within your local area or online.',
     descKey: 'therapistFinderDesc',
-    link: '#',
+    link: 'https://www.psychologytoday.com/us/therapists',
     icon: UserPlus,
     urgent: false
   },
@@ -42,7 +41,7 @@ const localResources = [
     titleKey: 'mindfulnessLibrary',
     description: 'A curated collection of guided meditations and articles on mental well-being.',
     descKey: 'mindfulnessLibraryDesc',
-    link: '#',
+    link: 'https://www.mindful.org/meditation/mindfulness-getting-started/',
     icon: BookOpen,
     urgent: false
   }
@@ -55,7 +54,7 @@ export default function ResourcesPage() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const response = await aiAPI.getResourceRecommendations({ userConcerns: 'general wellness', language });
+        const response = await aiAPI.getResourceRecommendations({ language });
         setAiRecommendations(response.data.recommendations);
       } catch (error) {
         setAiRecommendations(t?.resources?.subtitle || 'Explore support groups, mental health apps, and professional counseling for personalized guidance.');
@@ -140,8 +139,6 @@ export default function ResourcesPage() {
           )
         })}
       </div>
-
-      <ExercisesSection />
 
       <motion.div 
         initial={{ opacity: 0 }}
